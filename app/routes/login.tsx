@@ -100,7 +100,7 @@ const Login: FC = () => {
           <h1 className={`text-4xl font-bold ${
             isDarkMode ? 'text-white' : 'text-gray-900'
           }`}>
-            TrackaAbility
+            TrackAbility
           </h1>
           <p className={`${
             isDarkMode ? 'text-gray-300' : 'text-gray-600'
@@ -260,7 +260,7 @@ const Login: FC = () => {
 
         <div className="text-center space-y-2">
           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Sistema de gestión inteligente
+            Gestión inteligente de información
           </p>
           <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
             v1.0.0

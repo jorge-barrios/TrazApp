@@ -20,86 +20,42 @@ function _mergeNamespaces(n, m) {
 const CACHE_NAME = "app-v1";
 const ASSETS = [
   "/",
-  "/manifest.json",
-  "/icons/icon-192x192.png",
-  "/icons/icon-512x512.png",
-  "/fonts/inter-var.woff2"
-  // Asegúrate que esta ruta coincida con tu estructura
+  "/login",
+  "/manifest.json"
+  // Por ahora solo cacheamos las rutas principales
 ];
 self.addEventListener("install", (event) => {
+  console.log("Service worker instalado");
   event.waitUntil(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
-      console.log("Caching assets...");
-      try {
-        await cache.addAll(ASSETS);
-        console.log("Assets cached successfully");
-      } catch (error) {
-        console.error("Error caching assets:", error);
-      }
-      await self.skipWaiting();
-    })()
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
+    })
   );
 });
 self.addEventListener("activate", (event) => {
+  console.log("Service worker activado");
   event.waitUntil(
-    (async () => {
-      await self.clients.claim();
-      const keys = await caches.keys();
-      await Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })()
+    Promise.all([
+      self.clients.claim(),
+      // Limpiar caches antiguos
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+        );
+      })
+    ])
   );
 });
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET" || event.request.url.includes("/api/") || event.request.url.includes("/auth/") || event.request.url.includes("socket") || event.request.url.includes("/ws")) {
-    return;
-  }
+  if (event.request.method !== "GET") return;
   event.respondWith(
-    (async () => {
-      try {
-        const networkResponse = await fetch(event.request);
-        if (networkResponse.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(event.request, networkResponse.clone());
-        }
-        return networkResponse;
-      } catch (error) {
-        const cachedResponse = await caches.match(event.request);
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        if (event.request.mode === "navigate") {
-          const mainPageResponse = await caches.match("/");
-          if (mainPageResponse) {
-            return mainPageResponse;
-          }
-        }
-        return new Response("Contenido no disponible", {
-          status: 200,
-          headers: { "Content-Type": "text/plain;charset=UTF-8" }
-        });
-      }
-    })()
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
   );
 });
 const entryWorker = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null
-}, Symbol.toStringTag, { value: "Module" }));
-var __getOwnPropNames$4 = Object.getOwnPropertyNames;
-var __commonJS$4 = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames$4(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
-var require_worker_runtime$4 = __commonJS$4({
-  "@remix-pwa/worker-runtime"(exports, module) {
-    module.exports = {};
-  }
-});
-var worker_runtime_default$4 = require_worker_runtime$4();
-const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  default: worker_runtime_default$4
 }, Symbol.toStringTag, { value: "Module" }));
 var __getOwnPropNames$3 = Object.getOwnPropertyNames;
 var __commonJS$3 = (cb, mod) => function __require() {
@@ -111,7 +67,7 @@ var require_worker_runtime$3 = __commonJS$3({
   }
 });
 var worker_runtime_default$3 = require_worker_runtime$3();
-const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$3
 }, Symbol.toStringTag, { value: "Module" }));
@@ -125,7 +81,7 @@ var require_worker_runtime$2 = __commonJS$2({
   }
 });
 var worker_runtime_default$2 = require_worker_runtime$2();
-const route2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$2
 }, Symbol.toStringTag, { value: "Module" }));
@@ -139,7 +95,7 @@ var require_worker_runtime$1 = __commonJS$1({
   }
 });
 var worker_runtime_default$1 = require_worker_runtime$1();
-const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$1
 }, Symbol.toStringTag, { value: "Module" }));
@@ -153,7 +109,7 @@ var require_worker_runtime = __commonJS({
   }
 });
 var worker_runtime_default = require_worker_runtime();
-const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default
 }, Symbol.toStringTag, { value: "Module" }));
@@ -162,8 +118,8 @@ const assets = [
   "/favicon.ico",
   "/logo-dark.png",
   "/logo-light.png",
+  "/manifes.json",
   "/manifest.json",
-  "/fonts/inter-var.woff2",
   "/icons/icon-192x192.png",
   "/icons/icon-512x512.png"
 ];
@@ -180,18 +136,6 @@ const routes = {
     hasWorkerAction: false,
     module: route0
   },
-  "routes/manifest[.]json": {
-    id: "routes/manifest[.]json",
-    parentId: "root",
-    path: "manifest.json",
-    index: void 0,
-    caseSensitive: void 0,
-    hasLoader: true,
-    hasAction: false,
-    hasWorkerLoader: false,
-    hasWorkerAction: false,
-    module: route1
-  },
   "routes/dashboard": {
     id: "routes/dashboard",
     parentId: "root",
@@ -202,7 +146,7 @@ const routes = {
     hasAction: false,
     hasWorkerLoader: false,
     hasWorkerAction: false,
-    module: route2
+    module: route1
   },
   "routes/_index": {
     id: "routes/_index",
@@ -214,7 +158,7 @@ const routes = {
     hasAction: false,
     hasWorkerLoader: false,
     hasWorkerAction: false,
-    module: route3
+    module: route2
   },
   "routes/login": {
     id: "routes/login",
@@ -226,7 +170,7 @@ const routes = {
     hasAction: false,
     hasWorkerLoader: false,
     hasWorkerAction: false,
-    module: route4
+    module: route3
   }
 };
 const entry = { module: entryWorker };
