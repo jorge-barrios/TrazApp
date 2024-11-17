@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-gray-900 text-white;
+}
+
+/* Estilos base para inputs y selects */
+input, select, textarea {
+  @apply bg-gray-800 text-white border border-gray-700 rounded-lg px-3 py-2;
+}
+
+input:disabled, select:disabled, textarea:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Estilos para errores en formularios */
+.form-error {
+  @apply border-red-500 bg-red-500/10;
+}
+
+.error-message {
+  @apply text-red-500 text-xs mt-1;
+}
+
+/* Estilos para botones */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-secondary {
+  @apply bg-gray-700 text-white hover:bg-gray-600;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+/* Estilos para contenedores principales */
+.main-container {
+  @apply min-h-screen bg-gray-900;
+}
+
+.content-container {
+  @apply max-w-7xl mx-auto p-6;
+}
+
+/* Animaciones */
+@keyframes scan {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.animate-scan {
+  animation: scan 2s linear infinite;
+}

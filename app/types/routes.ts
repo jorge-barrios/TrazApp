@@ -1,5 +1,6 @@
 // Archivo: app/types/routes.ts
 
+// Tu código aquí
 export type AppRoutes = {
     login: '/login',
     dashboard: '/dashboard',
