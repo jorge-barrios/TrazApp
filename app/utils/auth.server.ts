@@ -71,17 +71,18 @@ export async function getUser(request: Request) {
 
 export async function requireAdmin(request: Request) {
   const response = new Response();
-  const supabase = createServerClient<Database>(
+  
+  const supabase = createServerClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!,
     { request, response }
   );
-  
-  const { data: { session }, error } = await supabase.auth.getSession();
-  
-  if (error || !session) {
-    throw redirect("/login", { 
-      headers: response.headers 
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    throw redirect('/login', {
+      headers: response.headers,
     });
   }
 
@@ -89,20 +90,15 @@ export async function requireAdmin(request: Request) {
     .from('profiles')
     .select('access_level')
     .eq('user_id', session.user.id)
-    .eq('active', true)
     .single();
 
-  if (profile?.access_level !== 'admin') {
-    throw redirect("/unauthorized", { 
-      headers: response.headers 
+  if (!profile || profile.access_level !== 'admin') {
+    throw redirect('/', {
+      headers: response.headers,
     });
   }
 
-  return { 
-    supabase, 
-    response,
-    session 
-  };
+  return { supabase, response };
 }
 
 export async function getProfile(request: Request) {

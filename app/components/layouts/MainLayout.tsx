@@ -1,8 +1,8 @@
 // Archivo: /app/components/layouts/MainLayout.tsx
-import { 
-  QrCodeIcon, 
-  HomeIcon, 
-  UserIcon, 
+import {
+  QrCodeIcon,
+  HomeIcon,
+  UserIcon,
   UsersIcon,
   ChartBarIcon,
   ArrowLeftOnRectangleIcon,
@@ -27,11 +27,11 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
 
   const navigation = [
     { name: 'Inicio', href: '/', icon: HomeIcon },
+    { name: 'Dashboard', href: '/dashboard', icon: UserIcon },
     { name: 'Exámenes', href: '/exams', icon: QrCodeIcon },
     { name: 'Reportes', href: '/reports', icon: ChartBarIcon },
     { name: 'Perfil', href: '/profile', icon: UserIcon },
-    { name: 'Dashboard', href: '/dashboard', icon: Squares2X2Icon }, 
-    { name: 'Administracion', href: '/admin', icon: Cog6ToothIcon } 
+    { name: 'Administración', href: '/admin', icon: Cog6ToothIcon },
   ];
 
   const isCurrentPath = (path: string) => location.pathname === path;
@@ -48,7 +48,7 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
 
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black bg-opacity-60 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
@@ -70,7 +70,7 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
               ${isCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
               TrazApp
             </span>
-            
+
             {/* Close button for mobile */}
             <button
               onClick={() => setIsMobileMenuOpen(false)}
@@ -119,7 +119,7 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
                       <span className="whitespace-nowrap">{item.name}</span>
                     )}
                   </div>
-                  
+
                   {/* Tooltip cuando está colapsado */}
                   {isCollapsed && (
                     <div className="

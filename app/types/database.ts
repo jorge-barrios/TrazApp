@@ -1,5 +1,4 @@
 // Archivo: /app/types/database.ts
-
 export interface Database {
   public: {
     Tables: {
@@ -22,7 +21,7 @@ export interface Database {
           id: string;
           user_id: string;
           full_name: string;
-          role: 'professional' | 'transport' | 'laboratory';
+          role: 'professional' | 'transport' | 'laboratory' | 'admin'; // Agregado 'admin'
           access_level: 'admin' | 'user';
           node_id: string | null;
           active: boolean;
