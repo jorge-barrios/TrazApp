@@ -1,12 +1,12 @@
+// /app/routes/exams/new.tsx
 import { json, redirect } from "@remix-run/node";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { useLoaderData, Form as RemixForm, useActionData, useNavigation, useSubmit } from "@remix-run/react";
 import { requireAuth } from "~/utils/auth.server";
-import MainLayout from "~/components/layouts/MainLayout";
 import { useState, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { PatientSection } from "~/components/PatientSection";
-import { ExamSection } from "~/components/ExamSection";
+import { PatientSection } from "~/components/exam/forms/PatientForm";
+import { ExamSection } from "~/components/exam/forms/ExamForm";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { validateRut } from "~/utils/formatters";
@@ -239,7 +239,6 @@ export default function NewExam() {
 
   if (actionData?.success) {
     return (
-      <MainLayout>
         <div className="min-h-screen p-6 bg-gray-900">
           <div className="max-w-7xl mx-auto">
             <ExamSuccess 
@@ -248,12 +247,10 @@ export default function NewExam() {
             />
           </div>
         </div>
-      </MainLayout>
     );
   }
 
   return (
-    <MainLayout>
       <div className="min-h-screen p-6 bg-gray-900">
         <div className="max-w-7xl mx-auto"> {/* Cambiado de max-w-4xl a max-w-7xl */}
           <h1 className="text-3xl font-bold text-white mb-6">
@@ -350,6 +347,5 @@ export default function NewExam() {
           </FormProvider>
         </div>
       </div>
-    </MainLayout>
   );
 }

@@ -1,8 +1,9 @@
+// /app/components/exam/forms/ExamForm.tsx
 import { useFormContext } from "react-hook-form";
 import { useEffect } from "react";
 import { toTitleCase } from "~/utils/formatters";
 
-export const ExamSection = () => {
+export function ExamSection() {
   const {
     register,
     formState: { errors, touchedFields },

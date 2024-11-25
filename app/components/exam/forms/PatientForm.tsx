@@ -1,9 +1,10 @@
+// /app/components/exam/forms/PatientForm.tsx
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { formatRut, calculateAge, toTitleCase } from "~/utils/formatters";
-import { DocumentScanner } from "./DocumentScanner";
+import { DocumentScanner } from "../../DocumentScanner";
 
-export const PatientSection = () => {
+export function PatientSection() {
   const {
     register,
     formState: { errors, touchedFields },

@@ -1,16 +1,15 @@
-// Archivo: /app/components/layouts/MainLayout.tsx
-import {
-  QrCodeIcon,
-  HomeIcon,
+// app/components/layouts/MainLayout.tsx
+import { 
+  QrCodeIcon, 
+  HomeIcon, 
   UserIcon,
-  UsersIcon,
   ChartBarIcon,
   ArrowLeftOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  Squares2X2Icon,  // Añadir esta importación
+  BeakerIcon, // Para exámenes
   Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import { FC, ReactNode, useState } from 'react';
@@ -25,16 +24,32 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Actualizamos la navegación para incluir exámenes
   const navigation = [
     { name: 'Inicio', href: '/', icon: HomeIcon },
-    { name: 'Dashboard', href: '/dashboard', icon: UserIcon },
-    { name: 'Exámenes', href: '/exams', icon: QrCodeIcon },
+    { 
+      name: 'Exámenes', 
+      href: '/exams', 
+      icon: BeakerIcon,
+      // Subnavegación futura si se necesita
+      submenu: [
+        { name: 'Lista', href: '/exams' },
+        { name: 'Nuevo', href: '/exams/new' }
+      ] 
+    },
+    { name: 'Escanear', href: '/scan', icon: QrCodeIcon },
     { name: 'Reportes', href: '/reports', icon: ChartBarIcon },
-    { name: 'Perfil', href: '/profile', icon: UserIcon },
     { name: 'Administración', href: '/admin', icon: Cog6ToothIcon },
+    { name: 'Perfil', href: '/profile', icon: UserIcon }
   ];
 
-  const isCurrentPath = (path: string) => location.pathname === path;
+  const isCurrentPath = (path: string) => {
+    // Mejoramos la detección de ruta actual para que funcione con subrutas
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <div className="min-h-screen flex bg-gray-900 relative overflow-hidden">
@@ -48,7 +63,7 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
 
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
-        <div
+        <div 
           className="fixed inset-0 z-40 bg-black bg-opacity-60 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
@@ -70,7 +85,7 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
               ${isCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
               TrazApp
             </span>
-
+            
             {/* Close button for mobile */}
             <button
               onClick={() => setIsMobileMenuOpen(false)}
@@ -96,6 +111,8 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
           <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden hide-scrollbar">
             {navigation.map((item) => {
               const Icon = item.icon;
+              const isActive = isCurrentPath(item.href);
+              
               return (
                 <Link
                   key={item.name}
@@ -103,7 +120,7 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
                   className={`
                     group relative flex items-center mx-3 px-3 py-2 text-sm font-medium rounded-md
                     transition-all duration-200
-                    ${isCurrentPath(item.href)
+                    ${isActive
                       ? 'bg-gray-900 text-white'
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }
@@ -119,7 +136,7 @@ const MainLayout: FC<MainLayoutProps> = ({ children }) => {
                       <span className="whitespace-nowrap">{item.name}</span>
                     )}
                   </div>
-
+                  
                   {/* Tooltip cuando está colapsado */}
                   {isCollapsed && (
                     <div className="
