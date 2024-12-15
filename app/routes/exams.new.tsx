@@ -9,9 +9,11 @@ import { useState, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { PatientSection } from "~/exam/forms/PatientForm";
 import { ExamSection } from "~/exam/forms/ExamForm";
+import { ClinicalHistoryForm } from "~/exam/forms/ClinicalHistoryForm";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { validateRut } from "~/utils/formatters";
+import { Collapsible } from "~/components/Collapsible";
 
 // Tipos para los datos cargados desde el loader y acción
 interface LoaderData {
@@ -110,7 +112,7 @@ export const action: ActionFunction = async ({ request }) => {
     // 1. Primero crear o actualizar el paciente
     const patientData = {
       document_type: formData.get("documentType") as string,
-      document_number: formData.get("patientRut") as string,
+      document_number: formData.get("documentNumber") as string,
       first_name: formData.get("firstName") as string,
       first_last_name: formData.get("firstLastName") as string,
       second_last_name: formData.get("secondLastName") as string,
@@ -164,23 +166,47 @@ export const action: ActionFunction = async ({ request }) => {
       patientId = newPatient.id;
     }
 
-    // 2. Crear el examen vinculado al paciente
+    // 2. Luego crear el examen
     const examData = {
-      node_id: profile.node_id,
       patient_id: patientId,
+      node_id: profile.node_id,
       patient_name: `${patientData.first_name} ${patientData.first_last_name} ${patientData.second_last_name}`,
       exam_type: formData.get("examType") as string,
-      status: 'registered',
-      priority: formData.get("examPriority") as string || null,
+      purpose: formData.get("purpose") as string,
+      priority: formData.get("examPriority") as string,
       observations: formData.get("examObservations") as string || null,
-      exam_details: {
-        purpose: formData.get("purpose"),
-        organ: formData.get("organ"),
-        sample_type: formData.get("sampleType")
-      },
+      status: 'registered',
       created_by: session.user.id,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      exam_details: {
+        organ: formData.get("organ"),
+        sampleType: formData.get("sampleType"),
+        clinical: {
+          cervixAppearance: formData.get("clinicalInfo.cervixAppearance"),
+          menopause: {
+            status: formData.get("clinicalInfo.menopause.status"),
+            lastPeriodDate: formData.get("clinicalInfo.menopause.lastPeriodDate")
+          },
+          hormoneTherapy: formData.get("clinicalInfo.hormoneTherapy"),
+          currentPregnancy: formData.get("clinicalInfo.currentPregnancy"),
+          contraceptiveMethod: {
+            type: formData.get("clinicalInfo.contraceptiveMethod.type"),
+            other: formData.get("clinicalInfo.contraceptiveMethod.other")
+          },
+          amenorrhea: {
+            status: formData.get("clinicalInfo.amenorrhea.status"),
+            reason: formData.get("clinicalInfo.amenorrhea.reason"),
+            otherReason: formData.get("clinicalInfo.amenorrhea.otherReason")
+          },
+          hpvVaccine: formData.get("clinicalInfo.hpvVaccine"),
+          treatments: Array.from({ length: 10 }, (_, i) => {
+            const name = formData.get(`clinicalInfo.treatments.${i}.name`);
+            const year = formData.get(`clinicalInfo.treatments.${i}.year`);
+            return name && year ? { name, year } : null;
+          }).filter(Boolean)
+        }
+      }
     };
 
     const { data: exam, error: examError } = await supabase
@@ -226,9 +252,10 @@ const FormSection = ({ title, children }: { title: string, children: React.React
 
 // Schema de validación con Zod
 const examSchema = z.object({
+  // Datos del paciente
   nationality: z.string().min(1, "La nacionalidad es requerida"),
   documentType: z.string().min(1, "El tipo de documento es requerido"),
-  patientRut: z.string().min(1, "El RUN es requerido"),
+  documentNumber: z.string().min(1, "El número de documento es requerido"),
   firstName: z.string().min(1, "El nombre es requerido"),
   firstLastName: z.string().min(1, "El primer apellido es requerido"),
   secondLastName: z.string().min(1, "El segundo apellido es requerido"),
@@ -249,7 +276,46 @@ const examSchema = z.object({
   examPriority: z.string().min(1, "La prioridad es requerida"),
   organ: z.string().min(1, "El órgano es requerido"),
   sampleType: z.string().min(1, "El tipo de muestra es requerido"),
-  examObservations: z.string().optional()
+  examObservations: z.string().optional(),
+
+  // Antecedentes clínicos
+  clinicalInfo: z.object({
+    cervixAppearance: z.string().min(1, "Debe indicar la apariencia del cérvix"),
+    menopause: z.object({
+      status: z.enum(["YES", "NO", "UNKNOWN"], {
+        required_error: "Debe indicar el estado de menopausia"
+      }),
+      lastPeriodDate: z.string().min(1, "Debe indicar la fecha de última menstruación")
+    }),
+    hormoneTherapy: z.enum(["YES", "NO", "UNKNOWN"], {
+      required_error: "Debe indicar si recibe terapia hormonal"
+    }),
+    currentPregnancy: z.enum(["YES", "NO", "UNKNOWN"], {
+      required_error: "Debe indicar si está embarazada actualmente"
+    }),
+    contraceptiveMethod: z.object({
+      type: z.enum(["NONE", "IUD", "HORMONAL", "BARRIER", "OTHER"], {
+        required_error: "Debe seleccionar un método anticonceptivo"
+      }),
+      other: z.string().optional().nullable()
+    }),
+    amenorrhea: z.object({
+      status: z.enum(["YES", "NO", "UNKNOWN"], {
+        required_error: "Debe indicar si presenta amenorrea"
+      }),
+      reason: z.enum(["BREASTFEEDING", "METHOD", "OTHER"]).optional().nullable(),
+      otherReason: z.string().optional().nullable()
+    }),
+    hpvVaccine: z.enum(["YES", "NO", "UNKNOWN"], {
+      required_error: "Debe indicar si tiene vacuna contra VPH"
+    }),
+    treatments: z.array(
+      z.object({
+        name: z.string(),
+        year: z.string()
+      })
+    ).optional().default([])
+  })
 });
 
 // Componente principal
@@ -267,7 +333,7 @@ export default function NewExam() {
       // Datos del paciente
       nationality: 'Chilena',
       documentType: 'RUT',
-      patientRut: '',
+      documentNumber: '',
       firstName: '',
       firstLastName: '',
       secondLastName: '',
@@ -288,7 +354,29 @@ export default function NewExam() {
       examPriority: 'normal',
       organ: '',
       sampleType: '',
-      examObservations: ''
+      examObservations: '',
+
+      // Antecedentes clínicos
+      clinicalInfo: {
+        cervixAppearance: '',
+        menopause: {
+          status: 'UNKNOWN',
+          lastPeriodDate: ''
+        },
+        hormoneTherapy: 'UNKNOWN',
+        currentPregnancy: 'UNKNOWN',
+        contraceptiveMethod: {
+          type: 'NONE',
+          other: ''
+        },
+        amenorrhea: {
+          status: 'UNKNOWN',
+          reason: null,
+          otherReason: null
+        },
+        hpvVaccine: 'UNKNOWN',
+        treatments: []
+      }
     },
     resolver: zodResolver(examSchema)
   });
@@ -297,13 +385,29 @@ export default function NewExam() {
     try {
       const formData = new FormData();
       
-      // Agregar todos los campos al FormData
-      Object.entries(data).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formData.append(key, value.toString());
+      // Función recursiva para aplanar el objeto y agregar al FormData
+      const appendToFormData = (obj: any, prefix = '') => {
+        for (const key in obj) {
+          const value = obj[key];
+          const fieldName = prefix ? `${prefix}.${key}` : key;
+          
+          if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+            appendToFormData(value, fieldName);
+          } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              if (typeof item === 'object') {
+                appendToFormData(item, `${fieldName}.${index}`);
+              } else {
+                formData.append(`${fieldName}.${index}`, item?.toString() ?? '');
+              }
+            });
+          } else {
+            formData.append(fieldName, value?.toString() ?? '');
+          }
         }
-      });
+      };
 
+      appendToFormData(data);
       submit(formData, { method: "post" });
     } catch (error) {
       console.error('Error al enviar:', error);
@@ -364,15 +468,17 @@ export default function NewExam() {
                 </div>
               </FormSection>
 
-              {/* Sección Paciente */}
-              <FormSection title="Datos del Paciente">
+              <Collapsible title="Datos del Paciente">
                 <PatientSection />
-              </FormSection>
+              </Collapsible>
 
-              {/* Sección Examen */}
-              <FormSection title="Datos del Examen">
+              <Collapsible title="Datos del Examen">
                 <ExamSection />
-              </FormSection>
+              </Collapsible>
+
+              <Collapsible title="Antecedentes Clínicos">
+                <ClinicalHistoryForm />
+              </Collapsible>
 
               {/* Errores del formulario */}
               {Object.keys(methods.formState.errors).length > 0 && (

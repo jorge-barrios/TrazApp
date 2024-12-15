@@ -6,7 +6,7 @@ import { DocumentScanner } from "../../components/DocumentScanner";
 import { MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { useFetcher } from "@remix-run/react";
 
-export function PatientSection() {
+export function PatientSection({ isEdit = false }) {
   const {
     register,
     formState: { errors, touchedFields },
@@ -20,18 +20,19 @@ export function PatientSection() {
   const birthDate = watch('birthDate');
   const healthInsurance = watch('healthInsurance');
   const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'found' | 'not_found'>('idle');
-  const [showFullForm, setShowFullForm] = useState(false);
+  const [showFullForm, setShowFullForm] = useState(isEdit); // Show form immediately if editing
   const fetcher = useFetcher();
 
   const clearForm = () => {
-    // Limpiar todos los campos excepto documentType y patientRut
+    if (isEdit) return; // Don't clear form if editing
+    
+    // Limpiar todos los campos excepto documentType y documentNumber
     setValue('nationality', '', { shouldValidate: false });
     setValue('firstName', '', { shouldValidate: false });
     setValue('firstLastName', '', { shouldValidate: false });
     setValue('secondLastName', '', { shouldValidate: false });
     setValue('gender', '', { shouldValidate: false });
     setValue('birthDate', '', { shouldValidate: false });
-    setValue('age', '', { shouldValidate: false });
     setValue('phone', '', { shouldValidate: false });
     setValue('region', '', { shouldValidate: false });
     setValue('commune', '', { shouldValidate: false });
@@ -41,21 +42,20 @@ export function PatientSection() {
     setShowFullForm(false);
   };
 
-  const searchPatient = async (rut: string) => {
-    if (!rut || documentType !== 'RUT') return;
+  const searchPatient = async (documentNumber: string) => {
+    if (isEdit) return; // Don't search if editing
+    if (!documentNumber || documentType !== 'RUT') return;
     
     setVerificationStatus('verifying');
-    clearForm(); // Limpiar el formulario antes de buscar
+    clearForm();
     
     try {
-      const response = await fetch(`/api/patient/search?documentNumber=${rut}`);
+      const response = await fetch(`/api/patient/search?documentNumber=${documentNumber}`);
       const data = await response.json();
 
-      // Agregamos un retraso mínimo de 1.5 segundos
       await new Promise(resolve => setTimeout(resolve, 500));
 
       if (response.ok && data.patient) {
-        // Llenar formulario con datos del paciente
         setValue('nationality', data.patient.nationality, { shouldValidate: true });
         setValue('firstName', data.patient.first_name, { shouldValidate: true });
         setValue('firstLastName', data.patient.first_last_name, { shouldValidate: true });
@@ -74,44 +74,46 @@ export function PatientSection() {
         setShowFullForm(true);
       } else {
         setVerificationStatus('not_found');
-        setShowFullForm(true); // Mostrar el formulario para llenar datos
+        setShowFullForm(true);
       }
     } catch (error) {
       console.error('Error buscando paciente:', error);
       setVerificationStatus('not_found');
-      setShowFullForm(true); // Mostrar el formulario para llenar datos
+      setShowFullForm(true);
     }
   };
 
-  const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isEdit) return; // Don't handle changes if editing
+    
     const value = e.target.value;
     if (documentType === 'RUT') {
       const formattedRut = formatRut(value);
-      setValue('patientRut', formattedRut, {
+      setValue('documentNumber', formattedRut, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
       });
       setVerificationStatus('idle');
     } else {
-      setValue('patientRut', value);
+      setValue('documentNumber', value);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const rut = getValues('patientRut');
-      if (rut && rut.length >= 9) {
-        searchPatient(rut);
+      const documentNumber = getValues('documentNumber');
+      if (documentNumber && documentNumber.length >= 9) {
+        searchPatient(documentNumber);
       }
     }
   };
 
   const handleSearch = () => {
-    const rut = getValues('patientRut');
-    if (rut && rut.length >= 9) {
-      searchPatient(rut);
+    const documentNumber = getValues('documentNumber');
+    if (documentNumber && documentNumber.length >= 9) {
+      searchPatient(documentNumber);
     }
   };
 
@@ -127,7 +129,7 @@ export function PatientSection() {
 
   // Actualizar validación cuando cambia el tipo de documento
   useEffect(() => {
-    trigger('patientRut');
+    trigger('documentNumber');
     clearForm();
   }, [documentType, trigger]);
 
@@ -140,7 +142,7 @@ export function PatientSection() {
 
   return (
     <div className="space-y-4">
-      <DocumentScanner />
+      {!isEdit && <DocumentScanner />}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {/* Sección de búsqueda */}
         <div className="flex flex-col space-y-1">
@@ -148,9 +150,9 @@ export function PatientSection() {
             Tipo de ID*
           </label>
           <select
-            {...register('documentType', { required: "Campo requerido" })}
+            {...register('documentType')}
             className="bg-gray-700 text-white rounded px-3 py-2"
-            defaultValue="RUT"
+            disabled={isEdit}
           >
             <option value="RUT">RUN</option>
             <option value="PASSPORT">Pasaporte</option>
@@ -168,11 +170,12 @@ export function PatientSection() {
             <div className="relative flex-1">
               <input
                 type="text"
-                {...register('patientRut')}
-                onChange={handleRutChange}
+                {...register('documentNumber')}
+                onChange={handleDocumentChange}
                 onKeyDown={handleKeyPress}
+                disabled={isEdit}
                 className={`w-full bg-gray-700 text-white rounded px-3 py-2 ${
-                  touchedFields.patientRut && errors.patientRut
+                  touchedFields.documentNumber && errors.documentNumber
                     ? 'border-2 border-red-500'
                     : verificationStatus === 'found'
                     ? 'border-2 border-green-500'
@@ -192,7 +195,7 @@ export function PatientSection() {
                 )}
               </div>
             </div>
-            {documentType === 'RUT' && (
+            {!isEdit && documentType === 'RUT' && (
               <button
                 type="button"
                 onClick={handleSearch}
@@ -200,12 +203,12 @@ export function PatientSection() {
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
               >
                 <MagnifyingGlassIcon className="h-5 w-5" />
-                <span>Buscar</span>
+                Buscar
               </button>
             )}
           </div>
-          {errors.patientRut && (
-            <span className="text-red-500 text-xs">{errors.patientRut.message}</span>
+          {errors.documentNumber && (
+            <span className="text-red-500 text-xs">{errors.documentNumber.message}</span>
           )}
           {verificationStatus === 'not_found' && documentType === 'RUT' && (
             <span className="text-yellow-500 text-xs">
@@ -298,7 +301,9 @@ export function PatientSection() {
                 type="text"
                 {...register('secondLastName', { required: "Campo requerido" })}
                 onChange={(e) => handleTextChange(e, 'secondLastName')}
-                className="bg-gray-700 text-white rounded px-3 py-2"
+                className={`bg-gray-700 text-white rounded px-3 py-2 ${
+                  touchedFields.secondLastName && errors.secondLastName ? 'border-2 border-red-500' : ''
+                }`}
                 placeholder="Apellido2"
               />
               {errors.secondLastName && (
@@ -386,7 +391,9 @@ export function PatientSection() {
                 type="text"
                 {...register('commune', { required: "Campo requerido" })}
                 onChange={(e) => handleTextChange(e, 'commune')}
-                className="bg-gray-700 text-white rounded px-3 py-2"
+                className={`bg-gray-700 text-white rounded px-3 py-2 ${
+                  touchedFields.commune && errors.commune ? 'border-2 border-red-500' : ''
+                }`}
                 placeholder="La Florida"
               />
               {errors.commune && (
@@ -402,7 +409,9 @@ export function PatientSection() {
                 type="text"
                 {...register('address', { required: "Campo requerido" })}
                 onChange={(e) => handleTextChange(e, 'address')}
-                className="w-full bg-gray-700 text-white rounded px-3 py-1.5"
+                className={`w-full bg-gray-700 text-white rounded px-3 py-1.5 ${
+                  touchedFields.address && errors.address ? 'border-2 border-red-500' : ''
+                }`}
                 placeholder="Avenida Uno #10021"
               />
               {errors.address && (

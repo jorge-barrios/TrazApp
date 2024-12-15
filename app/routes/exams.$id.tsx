@@ -15,10 +15,44 @@ import {
   ClockIcon,
   InformationCircleIcon,
   XMarkIcon,
+  PhoneIcon,
+  MapPinIcon,
 } from "@heroicons/react/24/outline";
 import { QrCodeIcon } from "@heroicons/react/24/solid";
+import { ClipboardIcon } from "@heroicons/react/24/outline";
 
 import { QRCodeSVG } from 'qrcode.react';
+
+import { 
+  translateSampleType, 
+  translatePurpose, 
+  translateOrgan,
+  formatRut,
+  formatPhone,
+  formatAddress,
+  translateClinicalStatus, 
+  translateContraceptiveMethod, 
+  translateCervixAppearance
+} from "~/utils/translations";
+
+interface ExamDetails {
+  cervix_appearance?: string;
+  menopause?: string;
+  current_pregnancy?: string;
+  contraceptive_method?: string;
+  hpv_vaccine?: string;
+  sample_type?: string;
+  organ?: string;
+}
+
+interface ExamStatusHistory {
+  id: string;
+  exam_id: string;
+  status: string;
+  created_at: string;
+  created_by: string;
+  observations?: string;
+}
 
 interface Exam {
   id: string;
@@ -26,9 +60,8 @@ interface Exam {
   patient_id: string | null;
   patient_name: string | null;
   exam_type: string;
-  exam_details: {
-    [key: string]: any;
-  } | null;
+  purpose: string;
+  exam_details: ExamDetails;
   status: 'registered' | 'pending' | 'in_process' | 'completed';
   priority: string | null;
   observations: string | null;
@@ -56,6 +89,7 @@ interface Exam {
     commune: string;
     address: string;
   };
+  status_history?: ExamStatusHistory[];
 }
 
 interface LoaderData {
@@ -119,6 +153,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       .eq("id", id)
       .single();
 
+    console.log("Exam Query completo:", JSON.stringify(examQuery, null, 2));
+    console.log("Exam details:", JSON.stringify(examQuery?.exam_details, null, 2));
     console.log("Resultado de la consulta del examen:", examQuery);
     console.log("Error de la consulta si existe:", examError);
 
@@ -185,6 +221,16 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       .eq("exam_id", id)
       .order("created_at", { ascending: true });
 
+    // Obtener el perfil del creador del examen
+    const { data: creatorProfile } = await supabase
+      .from("profiles")
+      .select(`
+        full_name,
+        role
+      `)
+      .eq("user_id", examData.created_by)
+      .single();
+
     const fullHistory = [
       {
         id: examData.id,
@@ -193,6 +239,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
         created_at: examData.created_at,
         created_by: examData.created_by,
         notes: "El examen fue registrado en el sistema",
+        created_by_profile: creatorProfile
       },
       ...(statusHistory || []),
     ];
@@ -248,18 +295,36 @@ const InfoItem = ({
   label,
   value,
   className = "",
+  icon,
 }: {
   label: string;
   value: React.ReactNode;
   className?: string;
+  icon?: React.ComponentType<any>;
 }) => (
   <div className={`flex justify-between items-center ${className}`}>
     <dt className="text-sm text-gray-400">{label}</dt>
+    {icon && (
+      <div className="mr-2">
+        <icon className="h-5 w-5 text-gray-400" />
+      </div>
+    )}
     <dd className="text-white">
       {value || <span className="text-gray-500 italic">No especificado</span>}
     </dd>
   </div>
 );
+
+const translateStatus = (status: string): string => {
+  const translations: Record<string, string> = {
+    'registered': 'Registrado',
+    'pending': 'Pendiente',
+    'in_process': 'En Proceso',
+    'completed': 'Completado',
+    'cancelled': 'Cancelado'
+  };
+  return translations[status] || status;
+};
 
 export default function ExamDetails() {
   const { exam, statusHistory, userCanEdit } = useLoaderData<LoaderData>();
@@ -275,24 +340,45 @@ export default function ExamDetails() {
     }
   };
 
-  // Extraer detalles del examen
-  const examDetails = exam.exam_details || {};
-
   const content = (
     <div className="min-h-screen bg-gray-900">
       <div className="p-6">
-        {/* Header compacto */}
+        {/* Header con QR */}
         <div className="flex justify-between items-center bg-gray-800/40 p-4 rounded-lg mb-6">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-bold text-white">
-              Examen #{exam.id.slice(0, 8)}
-            </h1>
-            <div className="flex items-center gap-3">
-              <ExamStatusBadge status={exam.status} />
-              <ExamPriorityBadge priority={exam.priority || "normal"} />
-              <span className="text-sm text-gray-400">
-                Última actualización: {formatLongDate(exam.updated_at)}
-              </span>
+          <div className="flex items-center gap-6">
+            {/* QR Code */}
+            <div className="bg-white p-2 rounded-lg">
+              <QRCodeSVG
+                value={JSON.stringify({
+                  id: exam.id,
+                  type: exam.exam_type,
+                  patient: exam.patient?.full_name || exam.patient_name,
+                  status: exam.status,
+                  priority: exam.priority
+                })}
+                size={80}
+                level="H"
+                includeMargin={false}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                Examen #{exam.id}
+                <button 
+                  onClick={() => navigator.clipboard.writeText(exam.id)}
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                  title="Copiar ID"
+                >
+                  <ClipboardIcon className="h-4 w-4" />
+                </button>
+              </h1>
+              <div className="flex items-center gap-3">
+                <ExamStatusBadge status={exam.status} />
+                <ExamPriorityBadge priority={exam.priority || "normal"} />
+                <span className="text-sm text-gray-400">
+                  Última actualización: {formatLongDate(exam.updated_at)}
+                </span>
+              </div>
             </div>
           </div>
           <button
@@ -305,130 +391,125 @@ export default function ExamDetails() {
         </div>
 
         {/* Contenido principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column: QR Code and Info */}
-          <div className="space-y-6">
-            {/* QR Code */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Historial de Estados (más ancho) */}
+          <div className="lg:col-span-7 space-y-6">
             <DetailCard
-              icon={QrCodeIcon}
-              title="Código QR del Examen"
-              colorClass="bg-purple-600"
+              icon={ClockIcon}
+              title="Historial de Estados"
+              colorClass="bg-yellow-600"
             >
-              <div className="flex flex-col items-center p-4 bg-white rounded-lg">
-                <QRCodeSVG
-                  value={JSON.stringify({
-                    id: exam.id,
-                    type: exam.exam_type,
-                    patient: exam.patient?.full_name || exam.patient_name,
-                    status: exam.status,
-                    priority: exam.priority
-                  })}
-                  size={160}
-                  level="H"
-                  includeMargin
-                  className="mb-2"
-                />
-                <p className="text-gray-900 text-sm font-medium mt-2">
-                  ID: {exam.id.slice(0, 8)}
-                </p>
+              <div>
+                <ExamStatusTimeline history={statusHistory} />
+              </div>
+            </DetailCard>
+          </div>
+
+          {/* Panel lateral derecho */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Info del paciente */}
+            <DetailCard
+              icon={UserIcon}
+              title="Datos del Paciente"
+              colorClass="bg-blue-600"
+            >
+              <div className="space-y-6">
+                {/* Información Personal */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-400 mb-3 border-b border-gray-700 pb-1">
+                    Información Personal
+                  </h4>
+                  <dl className="grid grid-cols-2 gap-4">
+                    <InfoItem 
+                      label="Nombre" 
+                      value={exam.patient?.full_name || exam.patient_name} 
+                      className="col-span-2"
+                    />
+                    <InfoItem 
+                      label="RUT" 
+                      value={formatRut(exam.patient?.document_number)}
+                    />
+                    <InfoItem 
+                      label="Edad" 
+                      value={exam.patient?.birth_date ? `${calculateAge(exam.patient.birth_date)} años` : 'No disponible'} 
+                    />
+                    <InfoItem 
+                      label="Género" 
+                      value={exam.patient?.gender === 'female' ? 'Femenino' : 'Masculino'} 
+                    />
+                    <InfoItem 
+                      label="Previsión" 
+                      value={exam.patient?.health_insurance || 'No especificada'} 
+                    />
+                  </dl>
+                </div>
+
+                {/* Información de Contacto */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-400 mb-3 border-b border-gray-700 pb-1">
+                    Información de Contacto
+                  </h4>
+                  <dl className="grid grid-cols-2 gap-4">
+                    <InfoItem 
+                      label="Teléfono"
+                      value={formatPhone(exam.patient?.phone)}
+                      icon={PhoneIcon}
+                      className="col-span-2"
+                    />
+                    <InfoItem 
+                      label="Dirección"
+                      value={formatAddress(
+                        exam.patient?.address,
+                        exam.patient?.commune,
+                        exam.patient?.region
+                      )}
+                      icon={MapPinIcon}
+                      className="col-span-2"
+                    />
+                  </dl>
+                </div>
               </div>
             </DetailCard>
 
-            {/* Info del paciente y examen */}
+            {/* Detalles del Examen */}
             <DetailCard
-              icon={InformationCircleIcon}
-              title="Información"
-              colorClass="bg-blue-600"
+              icon={BeakerIcon}
+              title="Datos del Examen"
+              colorClass="bg-green-600"
             >
-              <dl className="space-y-4">
+              <dl className="grid grid-cols-2 gap-4">
                 <InfoItem 
-                  label="Nombre" 
-                  value={exam.patient?.full_name || exam.patient_name} 
-                />
-                <InfoItem 
-                  label="RUT" 
-                  value={exam.patient?.document_number} 
-                />
-                <InfoItem
-                  label="Edad"
-                  value={exam.patient?.birth_date ? `${calculateAge(exam.patient.birth_date)} años` : null}
+                  label="Tipo" 
+                  value="PAP"
                 />
                 <InfoItem 
-                  label="Género" 
-                  value={
-                    exam.patient?.gender === 'female' ? 'Femenino' : 
-                    exam.patient?.gender === 'male' ? 'Masculino' : 
-                    exam.patient?.gender || null
-                  } 
+                  label="Propósito" 
+                  value={translatePurpose(exam.purpose)}
                 />
-
-                {/* Información de contacto */}
-                <div className="border-t border-gray-700 my-4" />
-                <InfoItem label="Teléfono" value={exam.patient?.phone} />
-                <InfoItem label="Región" value={exam.patient?.region} />
-                <InfoItem label="Comuna" value={exam.patient?.commune} />
-                <InfoItem label="Dirección" value={exam.patient?.address} />
-
-                {/* Información del examen */}
-                <div className="border-t border-gray-700 my-4" />
-                <InfoItem label="Tipo de Examen" value={exam.exam_type} />
-                <InfoItem label="Centro" value={exam.node?.display_name} />
                 <InfoItem 
-                  label="Previsión" 
-                  value={
-                    exam.patient?.health_insurance === 'other' 
-                      ? exam.patient?.other_health_insurance 
-                      : exam.patient?.health_insurance
-                  } 
+                  label="Órgano" 
+                  value={(() => {
+                    // Intentar parsear exam_details si es string
+                    let details = exam.exam_details;
+                    if (typeof details === 'string') {
+                      try {
+                        details = JSON.parse(details);
+                      } catch (e) {
+                        console.error('Error parsing exam_details:', e);
+                      }
+                    }
+                    return translateOrgan((details as any)?.organ || 'No especificado');
+                  })()}
+                  className="col-span-2"
                 />
-
-                {/* Detalles específicos del examen */}
-                {Object.entries(examDetails).map(([key, value]) => (
-                  <InfoItem 
-                    key={key}
-                    label={key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.slice(1)}
-                    value={value}
-                  />
-                ))}
-
                 {exam.observations && (
-                  <div className="mt-2">
-                    <span className="text-sm text-gray-400">Observaciones</span>
-                    <p className="mt-1 text-white text-sm bg-gray-700/50 p-2 rounded">
-                      {exam.observations}
-                    </p>
-                  </div>
-                )}
-
-                {exam.status === "rejected" && (
-                  <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 mt-4">
-                    <h4 className="text-red-400 font-medium mb-2">
-                      Examen Rechazado
-                    </h4>
-                    <p className="text-sm text-red-300">
-                      No se pudo procesar el examen. Contactar al laboratorio
-                      para más detalles.
-                    </p>
-                  </div>
+                  <InfoItem 
+                    label="Observaciones" 
+                    value={exam.observations}
+                    className="col-span-2"
+                  />
                 )}
               </dl>
-            </DetailCard>
-
-            {userCanEdit && exam.status !== "completed" && (
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Editar Examen
-              </button>
-            )}
-          </div>
-
-          {/* Timeline */}
-          <div className="lg:col-span-2">
-            <DetailCard
-              icon={ClockIcon}
-              title="Seguimiento"
-              colorClass="bg-indigo-600"
-            >
-              <ExamStatusTimeline history={statusHistory} />
             </DetailCard>
           </div>
         </div>

@@ -1,5 +1,15 @@
-// app/components/exam/ExamStatusTimeline.tsx
-import { ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+// app/exam/ExamStatusTimeline.tsx
+import { 
+  ClockIcon, 
+  CheckCircleIcon,
+  DocumentCheckIcon,
+  BeakerIcon,
+  TruckIcon,
+  MagnifyingGlassIcon,
+  DocumentTextIcon,
+  XCircleIcon,
+  UserIcon
+} from '@heroicons/react/24/outline';
 import { formatDate } from '~/utils/dateFormatters';
 import type { TimelineEvent } from '~/types/exam';
 
@@ -13,21 +23,53 @@ interface TimelineItemProps {
   isLast: boolean;
 }
 
-const getStatusColor = (status: string): string => {
+const getStatusConfig = (status: string): { color: string; icon: any; bgColor: string } => {
   const normalizedStatus = status.toLowerCase().trim();
   
-  const statusColors: Record<string, string> = {
-    registered: 'border-gray-500',
-    collected: 'border-yellow-500',
-    sent_to_lab: 'border-blue-400',
-    in_analysis: 'border-blue-500',
-    results_available: 'border-purple-500',
-    completed: 'border-green-500',
-    rejected: 'border-red-500',
-    default: 'border-gray-400', // Fallback
+  const statusConfigs: Record<string, { color: string; icon: any; bgColor: string }> = {
+    registered: { 
+      color: 'text-gray-400',
+      bgColor: 'bg-gray-800/50',
+      icon: DocumentCheckIcon 
+    },
+    collected: { 
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-900/20',
+      icon: BeakerIcon 
+    },
+    sent_to_lab: { 
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-900/20',
+      icon: TruckIcon 
+    },
+    in_analysis: { 
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-900/30',
+      icon: MagnifyingGlassIcon 
+    },
+    results_available: { 
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-900/20',
+      icon: DocumentTextIcon 
+    },
+    completed: { 
+      color: 'text-green-400',
+      bgColor: 'bg-green-900/20',
+      icon: CheckCircleIcon 
+    },
+    rejected: { 
+      color: 'text-red-400',
+      bgColor: 'bg-red-900/20',
+      icon: XCircleIcon 
+    },
+    default: { 
+      color: 'text-gray-400',
+      bgColor: 'bg-gray-800/50',
+      icon: ClockIcon 
+    }
   };
 
-  return statusColors[normalizedStatus] || statusColors.default;
+  return statusConfigs[normalizedStatus] || statusConfigs.default;
 };
 
 const getStatusDisplay = (status: string): string => {
@@ -39,55 +81,66 @@ const getStatusDisplay = (status: string): string => {
     results_available: 'Resultados Disponibles',
     completed: 'Completado',
     rejected: 'Rechazado',
-    default: 'Estado desconocido', // Fallback
+    default: 'Estado desconocido'
   };
 
   return statusDisplay[status] || statusDisplay.default;
 };
 
 const TimelineItem = ({ event, isFirst, isLast }: TimelineItemProps) => {
-  const borderColor = getStatusColor(event.status || 'default');
+  const config = getStatusConfig(event.status || 'default');
   const displayStatus = getStatusDisplay(event.status || 'default');
+  const StatusIcon = config.icon;
   
   return (
-    <div className="relative">
+    <div className="relative group">
       {/* Línea conectora vertical */}
       {!isLast && (
-        <div className="absolute -left-10 top-4 bottom-0 w-0.5 bg-gray-700"></div>
+        <div className="absolute -left-10 top-6 bottom-0 w-0.5 bg-gray-700 group-hover:bg-gray-600 transition-colors"></div>
       )}
 
-      {/* Punto en la línea de tiempo */}
+      {/* Punto e icono en la línea de tiempo */}
       <div 
-        className={`absolute -left-10 w-4 h-4 rounded-full border-2 
-          ${borderColor} bg-gray-900 transform -translate-x-1/2
-          flex items-center justify-center`}
+        className={`absolute -left-10 w-8 h-8 rounded-full 
+          ${config.bgColor} transform -translate-x-1/2
+          flex items-center justify-center
+          ring-2 ring-gray-700 group-hover:ring-gray-600
+          transition-all duration-200 ease-in-out
+          group-hover:scale-110`}
       >
-        {isFirst && (event.status === 'completed') && (
-          <CheckCircleIcon className={`h-3 w-3 ${borderColor.replace('border', 'text')}`} />
-        )}
+        <StatusIcon className={`h-4 w-4 ${config.color}`} />
       </div>
 
       {/* Detalle del Evento */}
-      <div className="bg-gray-800/50 rounded-lg p-4 ml-6">
-        <div className="flex flex-col gap-1">
-          <span className="text-white font-medium">
-            {displayStatus}
-          </span>
-          <span className="text-sm text-gray-400">
-            {formatDate(event.created_at)}
-          </span>
-          {event.created_by && (
-            <span className="text-sm text-gray-400">
-              Realizado por: {event.created_by_profile?.full_name || 'Usuario del Sistema'}
-              {event.created_by_profile?.role && ` (${event.created_by_profile.role})`}
+      <div className={`${config.bgColor} rounded-lg p-4 ml-6 
+        border border-gray-700/50 group-hover:border-gray-600/50
+        transition-all duration-200 ease-in-out
+        group-hover:translate-x-1`}>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className={`${config.color} font-medium text-lg`}>
+              {displayStatus}
             </span>
+            <span className="text-sm text-gray-400 flex items-center gap-1">
+              <ClockIcon className="h-4 w-4" />
+              {formatDate(event.created_at)}
+            </span>
+          </div>
+          
+          {event.created_by && (
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <UserIcon className="h-4 w-4" />
+              <span>{event.created_by_profile?.full_name || 'Usuario del Sistema'}</span>
+              {event.created_by_profile?.role && (
+                <span className="px-2 py-0.5 rounded-full bg-gray-700/50 text-xs">
+                  {event.created_by_profile.role}
+                </span>
+              )}
+            </div>
           )}
+          
           {event.notes && (
-            <p className={`text-sm mt-2 p-2 rounded ${
-              event.status === 'rejected' 
-                ? 'text-red-400 bg-red-900/20' 
-                : 'text-gray-500 italic'
-            }`}>
+            <p className={`text-sm mt-1 p-2 rounded ${config.bgColor} border border-gray-700/30`}>
               {event.notes}
             </p>
           )}
@@ -111,18 +164,10 @@ export default function ExamStatusTimeline({ history }: ExamStatusTimelineProps)
   );
 
   return (
-    <div className="space-y-4">
-      {/* Cabecera */}
-      <div className="flex items-center gap-2 mb-6">
-        <ClockIcon className="h-5 w-5 text-gray-400" />
-        <h3 className="text-lg font-medium text-white">
-         Historial de Estados
-        </h3>
-      </div>
-
+    <div className="space-y-6">
       {/* Línea de Tiempo */}
       <div 
-        className="relative pl-12 space-y-8"
+        className="relative pl-12 space-y-6"
         role="list"
         aria-label="Historial de estados del examen"
       >
