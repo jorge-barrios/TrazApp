@@ -69,7 +69,7 @@ export function ExamSection() {
           >
             <option value="">Seleccionar</option>
             <option value="normal">Normal</option>
-            <option value="urgent">Urgente</option>
+            <option value="urgente">Urgente</option>
           </select>
           {errors.examPriority && (
             <span className="text-red-500 text-xs">{errors.examPriority.message}</span>
@@ -118,7 +118,7 @@ export function ExamSection() {
             <option value="">Seleccionar</option>
             <option value="ecografia">Ecografía</option>
             <option value="mamografia">Mamografía</option>           
-            <option value="pap">PAP</option>
+            <option value="PAP">PAP</option>
             <option value="mri">Resonancia Magnética</option>
             <option value="ct">Tomografía Computarizada</option>
           </select>
@@ -183,8 +183,6 @@ export function ExamSection() {
           )}
         </div>
 
-       
-
         <div className="md:col-span-2 lg:col-span-2">
           <label className="text-sm font-medium text-gray-400">
             Observaciones (Opcional)
@@ -201,4 +199,4 @@ export function ExamSection() {
       </div>
     </div>
   );
-};
+}

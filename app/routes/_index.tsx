@@ -109,8 +109,8 @@ export default function Index() {
   const navigate = useNavigate(); // <- Agregar este hook
 
   return (
-    <MainLayout>
-      <div className="min-h-screen p-6 bg-gray-900">
+    <MainLayout className="h-screen overflow-hidden">
+      <div className="flex-1 p-6 bg-gray-900 overflow-y-auto">
         {/* Header y Bienvenida */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
@@ -130,7 +130,7 @@ export default function Index() {
             <QuickActionButton
               icon={PlusIcon}
               text="Nuevo Examen"
-              onClick={() => navigate('/exam/new')}  // <- Agregar esta navegación
+              onClick={() => navigate('/exams/new')}  // <- Agregar esta navegación
             />
             <QuickActionButton
               icon={QrCodeIcon}

@@ -1,7 +1,7 @@
 // app/types/exam.ts
 
 // Estados posibles del examen
-export type ExamStatus = 
+export type ExamStatus =
   | 'registered'        // Registrado
   | 'collected'         // Recolectado
   | 'sent_to_lab'       // Enviado al laboratorio
@@ -17,20 +17,38 @@ export type ExamPriority = 'normal' | 'urgent';
 export interface Exam {
   id: string;
   node_id: string;
-  patient_name: string;
-  patient_rut: string;
-  patient_age?: number;
-  patient_gender?: string;
+  patient_id: string | null;
+  patient_name: string | null;
   exam_type: string;
+  exam_details: {
+    [key: string]: any;
+  } | null;
   status: ExamStatus;
   priority?: ExamPriority;
   observations?: string;
+  result_url?: string;
   created_at: string;
   updated_at: string;
+  completed_at: string | null;
   created_by: string;
   node?: {
     display_name: string;
     category: string;
+  };
+  patient?: {
+    id: string;
+    document_type: string;
+    document_number: string;
+    birth_date: string;
+    gender: string;
+    full_name: string;
+    nationality: string;
+    health_insurance: string;
+    other_health_insurance?: string;
+    phone: string;
+    region: string;
+    commune: string;
+    address: string;
   };
 }
 
@@ -41,10 +59,10 @@ export interface TimelineEvent {
   status: ExamStatus;
   created_at: string;
   created_by: string;
-  notes?: string; // Campo opcional para notas relacionadas al cambio de estado
+  notes?: string;
   created_by_profile?: {
     full_name: string;
-    role?: string; // Nuevo campo opcional para el rol del creador
+    role?: string;
   };
 }
 

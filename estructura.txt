@@ -1,0 +1,121 @@
+
+C:\Users\jorge\Trackability\TrazApp
+├── app/
+|  ├── components/
+|  |  ├── admin/
+|  |  |  ├── AdminUsersPage.tsx
+|  |  |  ├── UserFormDialog.tsx
+|  |  |  ├── UserFormModal.tsx
+|  |  |  └── UsersTable.tsx
+|  |  ├── DocumentScanner.tsx
+|  |  ├── exam/
+|  |  |  ├── ExamActions.tsx
+|  |  |  ├── ExamPriorityBadge.tsx
+|  |  |  ├── ExamStatusBadge.tsx
+|  |  |  ├── ExamTable.tsx
+|  |  |  ├── ExamTimeline.tsx
+|  |  |  ├── forms/
+|  |  |  |  ├── ExamForm.tsx
+|  |  |  |  └── PatientForm.tsx
+|  |  |  └── types.ts
+|  |  ├── layouts/
+|  |  |  ├── AuthenticatedLayout.tsx
+|  |  |  ├── MainLayout.tsx
+|  |  |  └── ProtectedLayout.tsx
+|  |  ├── login/
+|  |  |  ├── Header.tsx
+|  |  |  ├── LoadingSpinner.tsx
+|  |  |  ├── LoginButton.tsx
+|  |  |  ├── LoginForm.tsx
+|  |  |  ├── NodeSelector.tsx
+|  |  |  └── ThemeToggle.tsx
+|  |  ├── logout/
+|  |  |  └── LogoutButton.tsx
+|  |  ├── navigation/
+|  |  |  └── Navigation.tsx
+|  |  ├── scan/
+|  |  |  ├── QRScanner.tsx
+|  |  |  └── ScanResult.tsx
+|  |  └── user/
+|  |     └── UserProfile.tsx
+|  ├── entry.client.tsx
+|  ├── entry.server.tsx
+|  ├── entry.worker.js
+|  ├── entry.worker.ts
+|  ├── fonts.css
+|  ├── hooks/
+|  |  ├── auth.hooks.ts
+|  |  ├── useAuthUser.ts
+|  |  ├── useLoginForm.ts
+|  |  └── useTheme.ts
+|  ├── lib/
+|  |  ├── supabase-admin.ts
+|  |  ├── supabase.admin.server.ts
+|  |  └── supabase.server.ts
+|  ├── root.tsx
+|  ├── routes/
+|  |  ├── admin.tsx
+|  |  ├── admin.users.$id.tsx
+|  |  ├── admin.users.new.tsx
+|  |  ├── admin.users._index.tsx
+|  |  ├── admin._index.tsx
+|  |  ├── dashboard.tsx
+|  |  ├── exams.$id.tsx
+|  |  ├── exams.new.tsx
+|  |  ├── exams._index.tsx
+|  |  ├── login.tsx
+|  |  ├── logout.tsx
+|  |  ├── manifest[.]json.ts
+|  |  ├── scan.tsx
+|  |  └── _index.tsx
+|  ├── styles/
+|  |  ├── app.css
+|  |  └── global.css
+|  ├── tailwind.css
+|  ├── types/
+|  |  ├── database.ts
+|  |  ├── database.types.ts
+|  |  ├── exam.ts
+|  |  ├── nodes.ts
+|  |  └── routes.ts
+|  └── utils/
+|     ├── auth.server.ts
+|     ├── formatters.ts
+|     ├── ocr.server.ts
+|     ├── supabaseClient.ts
+|     ├── validations.ts
+|     └── validators.ts
+├── env.d.ts
+├── estructura.txt
+├── index.tsx
+├── middleware.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── public/
+|  ├── entry.worker.js
+|  ├── favicon.ico
+|  ├── fonts/
+|  |  └── inter-var.woff2
+|  ├── icons/
+|  |  ├── icon-192x192.png
+|  |  └── icon-512x512.png
+|  ├── logo-dark.png
+|  ├── logo-light.png
+|  └── manifest.json
+├── README.md
+├── route.tsx
+├── scripts/
+|  └── generate-icons.js
+├── supabase/
+├── tailwind.config.js
+├── tailwind.config.ts
+├── tsconfig.json
+└── vite.config.ts
+
+directory: 2685 file: 26257
+
+ignored: directory (65)
+
+
+[2K[1G

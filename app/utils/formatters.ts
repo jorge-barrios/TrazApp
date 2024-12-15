@@ -7,7 +7,7 @@ export const formatRut = (rut: string) => {
   if (value.length > 1) {
     const dv = value.slice(-1);
     const rutNumbers = value.slice(0, -1);
-    value = rutNumbers.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+    value = rutNumbers.replace(/\B(?=(\d{3})+(?!\d))/g, '') + '-' + dv;
   }
   
   return value;

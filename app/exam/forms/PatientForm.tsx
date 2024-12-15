@@ -1,8 +1,9 @@
-// /app/components/exam/forms/PatientForm.tsx
-import { useEffect } from "react";
+// app/components/exam/forms/PatientForm.tsx
+import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { formatRut, calculateAge, toTitleCase } from "~/utils/formatters";
-import { DocumentScanner } from "../../DocumentScanner";
+import { DocumentScanner } from "../../components/DocumentScanner";
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export function PatientSection() {
   const {
@@ -10,12 +11,14 @@ export function PatientSection() {
     formState: { errors, touchedFields },
     watch,
     setValue,
-    trigger
+    trigger,
+    getValues
   } = useFormContext();
 
   const documentType = watch('documentType');
   const birthDate = watch('birthDate');
   const healthInsurance = watch('healthInsurance');
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'found' | 'not_found'>('idle');
 
   // Modificar el efecto para calcular la edad
   useEffect(() => {
@@ -32,15 +35,51 @@ export function PatientSection() {
     trigger('patientRut');
   }, [documentType, trigger]);
 
+  const searchPatient = async () => {
+    const documentNumber = getValues('patientRut');
+    if (!documentNumber) return;
+
+    setVerificationStatus('verifying');
+    try {
+      const response = await fetch(`/api/patient?documentNumber=${documentNumber}`);
+      const data = await response.json();
+
+      if (response.ok && data.patient) {
+        // Llenar formulario con datos del paciente
+        setValue('nationality', data.patient.nationality, { shouldValidate: true });
+        setValue('firstName', data.patient.first_name, { shouldValidate: true });
+        setValue('firstLastName', data.patient.first_last_name, { shouldValidate: true });
+        setValue('secondLastName', data.patient.second_last_name, { shouldValidate: true });
+        setValue('gender', data.patient.gender, { shouldValidate: true });
+        setValue('birthDate', data.patient.birth_date, { shouldValidate: true });
+        setValue('phone', data.patient.phone, { shouldValidate: true });
+        setValue('region', data.patient.region, { shouldValidate: true });
+        setValue('commune', data.patient.commune, { shouldValidate: true });
+        setValue('address', data.patient.address, { shouldValidate: true });
+        setValue('healthInsurance', data.patient.health_insurance, { shouldValidate: true });
+        if (data.patient.other_health_insurance) {
+          setValue('otherHealthInsurance', data.patient.other_health_insurance);
+        }
+        setVerificationStatus('found');
+      } else {
+        setVerificationStatus('not_found');
+      }
+    } catch (error) {
+      console.error('Error verificando paciente:', error);
+      setVerificationStatus('not_found');
+    }
+  };
+
   const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (documentType === 'run') {
+    if (documentType === 'RUT') {
       const formattedRut = formatRut(value);
       setValue('patientRut', formattedRut, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true
       });
+      setVerificationStatus('idle');
     } else {
       setValue('patientRut', value);
     }
@@ -54,9 +93,9 @@ export function PatientSection() {
   };
 
   return (
-    <div className="space-y-4"> {/* Reducido de space-y-6 a space-y-4 */}
+    <div className="space-y-4">
       <DocumentScanner />
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3"> {/* Cambiado a 3 columnas y gap-3 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
         <div className="flex flex-col space-y-1">
           <label className="text-sm font-medium text-gray-400">
             Nacionalidad*
@@ -76,7 +115,7 @@ export function PatientSection() {
             placeholder="Chilena"
           />
           {errors.nationality && (
-            <span className="text-red-500 text-xs">{errors.nationality.message}</span> // Reducido tamaño del error
+            <span className="text-red-500 text-xs">{errors.nationality.message}</span>
           )}
         </div>
 
@@ -87,10 +126,10 @@ export function PatientSection() {
           <select
             {...register('documentType', { required: "Campo requerido" })}
             className="bg-gray-700 text-white rounded px-3 py-2"
-            defaultValue="run"
+            defaultValue="RUT"
           >
-            <option value="run">RUN</option>
-            <option value="passport">Pasaporte</option>
+            <option value="RUT">RUN</option>
+            <option value="PASSPORT">Pasaporte</option>
           </select>
           {errors.documentType && (
             <span className="text-red-500 text-xs">{errors.documentType.message}</span>
@@ -99,19 +138,42 @@ export function PatientSection() {
 
         <div className="flex flex-col space-y-1">
           <label className="text-sm font-medium text-gray-400">
-            {documentType === 'run' ? 'RUN*' : 'Pasaporte*'}
+            {documentType === 'RUT' ? 'RUN*' : 'Pasaporte*'}
           </label>
-          <input
-            type="text"
-            {...register('patientRut')} // La validación ahora viene del schema
-            onChange={handleRutChange}
-            className={`bg-gray-700 text-white rounded px-3 py-2 ${
-              touchedFields.patientRut && errors.patientRut ? 'border-2 border-red-500' : ''
-            }`}
-            placeholder={documentType === 'run' ? '12.345.678-9' : 'Número de pasaporte'}
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              {...register('patientRut')}
+              onChange={handleRutChange}
+              className={`flex-1 bg-gray-700 text-white rounded px-3 py-2 ${
+                touchedFields.patientRut && errors.patientRut ? 'border-2 border-red-500' : ''
+              }`}
+              placeholder={documentType === 'RUT' ? '12345678-9' : 'Número de pasaporte'}
+            />
+            <button
+              type="button"
+              onClick={searchPatient}
+              disabled={verificationStatus === 'verifying'}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {verificationStatus === 'verifying' ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <MagnifyingGlassIcon className="w-5 h-5" />
+                  <span>Buscar</span>
+                </>
+              )}
+            </button>
+          </div>
           {errors.patientRut && (
             <span className="text-red-500 text-xs">{errors.patientRut.message}</span>
+          )}
+          {verificationStatus === 'found' && (
+            <span className="text-green-500 text-xs">Paciente encontrado - datos cargados</span>
+          )}
+          {verificationStatus === 'not_found' && (
+            <span className="text-yellow-500 text-xs">Paciente no encontrado - ingrese los datos</span>
           )}
         </div>
 
@@ -201,7 +263,7 @@ export function PatientSection() {
           <input
             type="text"
             {...register('age')}
-            className="bg-gray-700 text-white/60 rounded px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed" // Modificado
+            className="bg-gray-700 text-white/60 rounded px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled
             readOnly
           />
@@ -246,9 +308,9 @@ export function PatientSection() {
             <option value="XI">XI. Aysén</option>
             <option value="XII">XII. Magallanes</option>
           </select>
-            {errors.region && (
-                <span className="text-red-500 text-sm">Campo requerido</span>
-              )}          
+          {errors.region && (
+            <span className="text-red-500 text-sm">Campo requerido</span>
+          )}          
         </div>
 
         <div className="flex flex-col space-y-1">
@@ -305,7 +367,6 @@ export function PatientSection() {
           )}
         </div>
 
-        {/* Campo condicional para otra previsión */}
         {healthInsurance === 'other' && (
           <div className="flex flex-col space-y-1">
             <label className="text-sm font-medium text-gray-400">
@@ -330,4 +391,4 @@ export function PatientSection() {
       </div>
     </div>
   );
-};
+}
