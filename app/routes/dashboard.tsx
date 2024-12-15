@@ -153,7 +153,11 @@ function ExamStatus({ status }: { status: ExamData['status'] }) {
     pending: { text: 'Pendiente', class: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' }
   };
 
-  const config = statusConfig[status];
+  // Valor por defecto si el estado no coincide
+  const defaultConfig = { text: 'Desconocido', class: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100' };
+  
+  const config = statusConfig[status as keyof typeof statusConfig] || defaultConfig;
+
   return (
     <span className={`px-2 py-1 rounded-full text-sm font-medium ${config.class}`}>
       {config.text}

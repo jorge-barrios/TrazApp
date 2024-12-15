@@ -10,6 +10,7 @@ import {
   XMarkIcon,
   QrCodeIcon,
 } from "@heroicons/react/24/outline";
+import { QRCodeSVG } from 'qrcode.react';
 
 interface ExamContentProps {
   exam: Exam;
@@ -152,7 +153,28 @@ export function ExamContent({
               title="Seguimiento"
               colorClass="bg-indigo-600"
             >
-              <ExamStatusTimeline history={statusHistory} />
+              <div className="space-y-6">
+                {/* QR Code */}
+                <div className="flex flex-col items-center p-4 bg-white rounded-lg">
+                  <QRCodeSVG
+                    value={JSON.stringify({
+                      id: exam.id,
+                      type: exam.exam_type,
+                      patient: exam.patient_name,
+                      status: exam.status
+                    })}
+                    size={200}
+                    level="H"
+                    includeMargin
+                    className="mb-2"
+                  />
+                  <p className="text-gray-900 text-sm font-medium">
+                    Código QR del Examen #{exam.id.slice(0, 8)}
+                  </p>
+                </div>
+                {/* Timeline */}
+                <ExamStatusTimeline history={statusHistory} />
+              </div>
             </DetailCard>
           </div>
         </div>

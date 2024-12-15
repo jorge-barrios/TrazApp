@@ -1,9 +1,9 @@
 // app/routes/exams._index.tsx
 
 import { useState } from "react";
-import { json } from "@remix-run/node";
-import type { LoaderFunction } from "@remix-run/node";
-import { useLoaderData, useNavigate, useRevalidator } from "@remix-run/react";
+import { json, redirect } from "@remix-run/node";
+import type { LoaderFunction, ActionFunction } from "@remix-run/node";
+import { useLoaderData, useNavigate, useRevalidator, Form, useSubmit } from "@remix-run/react";
 import { requireAuth } from "~/utils/auth.server";
 import MainLayout from "~/components/layouts/MainLayout";
 import ExamTable from "~/exam/ExamTable";
@@ -17,6 +17,7 @@ import {
   ClockIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import ConfirmationModal from "~/components/ConfirmationModal";
 
 interface LoaderData {
   user: {
@@ -120,24 +121,129 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 };
 
+export const action: ActionFunction = async ({ request }) => {
+  console.log("Action ejecutándose...");
+  const { supabase, response } = await requireAuth(request);
+  
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    return json({ error: "Error de autenticación" }, { 
+      status: 401,
+      headers: response.headers 
+    });
+  }
+
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "delete") {
+    const examId = formData.get("examId");
+    
+    // Verificar el rol y nodo del usuario
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role, node_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profileError) {
+      return json({ error: "Error al verificar permisos" }, { 
+        status: 400,
+        headers: response.headers 
+      });
+    }
+
+    // Verificar que el examen exista y obtener sus datos
+    const { data: exam, error: examError } = await supabase
+      .from("exams")
+      .select("node_id, created_by, status")
+      .eq("id", examId)
+      .single();
+
+    if (examError) {
+      return json({ error: "Error al verificar el examen" }, { 
+        status: 400,
+        headers: response.headers 
+      });
+    }
+
+    // Verificar permisos según el rol
+    const canDelete = profile.role === 'admin' 
+      ? profile.node_id === exam.node_id
+      : (
+        profile.node_id === exam.node_id &&
+        exam.created_by === user.id &&
+        exam.status === 'registered'
+      );
+
+    if (!canDelete) {
+      return json({ 
+        error: profile.role === 'admin' 
+          ? "Solo puedes eliminar exámenes de tu nodo" 
+          : "Solo puedes eliminar tus propios exámenes en estado registrado"
+      }, { 
+        status: 403,
+        headers: response.headers 
+      });
+    }
+    
+    try {
+      const { error } = await supabase
+        .from("exams")
+        .delete()
+        .eq("id", examId);
+
+      if (error) {
+        return json({ error: "Error al eliminar el examen" }, { 
+          status: 400,
+          headers: response.headers 
+        });
+      }
+
+      return redirect("/exams");
+    } catch (error) {
+      return json({ error: "Error al eliminar el examen" }, { 
+        status: 400,
+        headers: response.headers 
+      });
+    }
+  }
+
+  return json({ error: "Operación no válida" }, { 
+    headers: response.headers 
+  });
+};
+
 export default function ExamsIndex() {
   const { profile, exams, stats } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const revalidator = useRevalidator();
-  const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
+  const submit = useSubmit();
+  
+  // Estados separados para cada modal
+  const [examToView, setExamToView] = useState<string | null>(null);
+  const [examToDelete, setExamToDelete] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const handleExamDelete = async (examId: string) => {
-    try {
-      await fetch(`/api/exams/${examId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      revalidator.revalidate();
-    } catch (error) {
-      console.error("Error deleting exam:", error);
+  const handleExamDelete = (examId: string) => {
+    setExamToDelete(examId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (examToDelete) {
+      const formData = new FormData();
+      formData.append("intent", "delete");
+      formData.append("examId", examToDelete);
+      submit(formData, { method: "post" });
+      setShowDeleteModal(false);
+      setExamToDelete(null);
     }
+  };
+
+  const closeModal = () => {
+    setShowDeleteModal(false);
+    setExamToDelete(null);
   };
 
   const handleStatusChange = async (examId: string, newStatus: Exam["status"]) => {
@@ -233,15 +339,25 @@ export default function ExamsIndex() {
             exams={exams}
             onDelete={handleExamDelete}
             onStatusChange={handleStatusChange}
-            onExamClick={(examId) => setSelectedExamId(examId)}
+            onExamClick={(examId) => setExamToView(examId)}
           />
         </div>
 
         {/* Details Modal */}
-        {selectedExamId && (
+        {examToView && (
           <ExamDetailsModal
-            examId={selectedExamId}
-            onClose={() => setSelectedExamId(null)}
+            examId={examToView}
+            onClose={() => setExamToView(null)}
+          />
+        )}
+        {showDeleteModal && (
+          <ConfirmationModal
+            title="Eliminar Examen"
+            message="¿Estás seguro que deseas eliminar este examen? Esta acción no se puede deshacer."
+            confirmText="Eliminar"
+            cancelText="Cancelar"
+            onConfirm={confirmDelete}
+            onCancel={closeModal}
           />
         )}
       </div>

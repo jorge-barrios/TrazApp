@@ -18,6 +18,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { QrCodeIcon } from "@heroicons/react/24/solid";
 
+import { QRCodeSVG } from 'qrcode.react';
+
 interface Exam {
   id: string;
   node_id: string;
@@ -304,8 +306,35 @@ export default function ExamDetails() {
 
         {/* Contenido principal */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Info del paciente y examen */}
+          {/* Left column: QR Code and Info */}
           <div className="space-y-6">
+            {/* QR Code */}
+            <DetailCard
+              icon={QrCodeIcon}
+              title="Código QR del Examen"
+              colorClass="bg-purple-600"
+            >
+              <div className="flex flex-col items-center p-4 bg-white rounded-lg">
+                <QRCodeSVG
+                  value={JSON.stringify({
+                    id: exam.id,
+                    type: exam.exam_type,
+                    patient: exam.patient?.full_name || exam.patient_name,
+                    status: exam.status,
+                    priority: exam.priority
+                  })}
+                  size={160}
+                  level="H"
+                  includeMargin
+                  className="mb-2"
+                />
+                <p className="text-gray-900 text-sm font-medium mt-2">
+                  ID: {exam.id.slice(0, 8)}
+                </p>
+              </div>
+            </DetailCard>
+
+            {/* Info del paciente y examen */}
             <DetailCard
               icon={InformationCircleIcon}
               title="Información"
@@ -395,7 +424,7 @@ export default function ExamDetails() {
           {/* Timeline */}
           <div className="lg:col-span-2">
             <DetailCard
-              icon={QrCodeIcon}
+              icon={ClockIcon}
               title="Seguimiento"
               colorClass="bg-indigo-600"
             >

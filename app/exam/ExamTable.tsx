@@ -179,32 +179,54 @@ export default function ExamTable({
               {filteredExams.map((exam) => (
                 <tr
                   key={exam.id}
-                  onClick={() => onExamClick(exam.id)}
-                  className="hover:bg-gray-700/50 transition-colors cursor-pointer"
+                  className="hover:bg-gray-700/50 transition-colors"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-300">
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-300 cursor-pointer"
+                    onClick={() => onExamClick(exam.id)}
+                  >
                     {exam.id.slice(0, 8)}...
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm text-white cursor-pointer"
+                    onClick={() => onExamClick(exam.id)}
+                  >
                     {exam.patient_name || "N/A"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 cursor-pointer"
+                    onClick={() => onExamClick(exam.id)}
+                  >
                     {exam.exam_type || "N/A"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm cursor-pointer"
+                    onClick={() => onExamClick(exam.id)}
+                  >
                     <ExamStatusBadge status={exam.status} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm cursor-pointer"
+                    onClick={() => onExamClick(exam.id)}
+                  >
                     <ExamPriorityBadge priority={exam.priority || "normal"} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 cursor-pointer"
+                    onClick={() => onExamClick(exam.id)}
+                  >
                     {formatDate(exam.created_at)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <ExamActions
+                      examId={exam.id}
+                      status={exam.status}
                       exam={exam}
                       onStatusChange={(newStatus) => onStatusChange(exam.id, newStatus)}
-                      onDelete={() => onDelete(exam.id)}
+                      onDelete={(e) => {
+                        e.stopPropagation();
+                        onDelete(exam.id);
+                      }}
                     />
                   </td>
                 </tr>
