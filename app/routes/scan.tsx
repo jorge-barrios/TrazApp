@@ -7,6 +7,7 @@ import QRScanner from '~/components/scan/QRScanner';
 import ScanResult from '~/components/scan/ScanResult';
 import RecentActions from '~/components/scan/RecentActions';
 import ConfirmDialog from '~/components/scan/ConfirmDialog';
+import BatchView from '~/components/scan/BatchView';
 import type { RejectionReason } from '~/types/exam';
 import { requireAuth } from '~/utils/auth.server';
 import { createExamStatusHistory, getUserRecentActions, getExamCurrentStatus, undoLastExamStatusChange } from '~/utils/exam.server';
@@ -107,6 +108,15 @@ export default function ScanPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<{ examId: string, status: string } | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [batchItems, setBatchItems] = useState<Array<{
+    id: string;
+    examType: string;
+    patientName: string;
+    status: string;
+    priority: string;
+    timestamp: string;
+  }>>([]);
+  const [showBatchView, setShowBatchView] = useState(false);
   const fetcher = useFetcher();
 
   const getNextState = (currentState: string | null) => {
@@ -175,6 +185,15 @@ export default function ScanPage() {
             examId: scanResult.id,
             status: scanResult.status
           });
+          // Agregar al lote
+          setBatchItems(prev => [...prev, {
+            id: scanResult.id,
+            examType: scanResult.type,
+            patientName: scanResult.patient,
+            status: scanResult.status,
+            priority: scanResult.priority,
+            timestamp: new Date().toISOString()
+          }]);
         }
       }
       setScanResult(null);
@@ -198,6 +217,25 @@ export default function ScanPage() {
       setScanResult(null);
     }
   }, [fetcher.data]);
+
+  const handleReset = () => {
+    setScanResult(null);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleCloseBatch = () => {
+    setShowBatchView(false);
+  };
+
+  const handleViewBatch = () => {
+    setShowBatchView(true);
+  };
+
+  const handleClearBatch = () => {
+    setBatchItems([]);
+    setShowBatchView(false);
+  };
 
   const handleAdvanceState = () => {
     if (!scanResult?.nextState) return;
@@ -224,12 +262,6 @@ export default function ScanPage() {
 
   const handleError = (error: string) => {
     setError(error);
-  };
-
-  const handleReset = () => {
-    setScanResult(null);
-    setError(null);
-    setSuccess(null);
   };
 
   const handleAccept = () => {
@@ -282,9 +314,30 @@ export default function ScanPage() {
                 <h1 className="text-3xl font-bold text-white mb-2">
                   Escáner QR
                 </h1>
-                <p className="text-gray-400">
-                  Escanea el código QR del examen para actualizar su estado
-                </p>
+                <div className="flex justify-between items-center">
+                  <p className="text-gray-400">
+                    Escanea el código QR del examen para actualizar su estado
+                  </p>
+                  {batchItems.length > 0 && (
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm text-gray-400">
+                        {batchItems.length} muestras procesadas
+                      </span>
+                      <button
+                        onClick={handleViewBatch}
+                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                      >
+                        Ver lote
+                      </button>
+                      <button
+                        onClick={handleClearBatch}
+                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                      >
+                        Limpiar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="bg-gray-800 rounded-lg overflow-hidden">
@@ -368,6 +421,13 @@ export default function ScanPage() {
           </div>
         </div>
       </div>
+
+      {showBatchView && (
+        <BatchView
+          items={batchItems}
+          onClose={handleCloseBatch}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={showConfirmDialog}
