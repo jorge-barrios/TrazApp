@@ -75,6 +75,9 @@ export const loader: LoaderFunction = async ({ request }) => {
         node:nodes (
           display_name,
           category
+        ),
+        patient:patients!exams_patient_id_fkey (
+          document_number
         )
       `)
       .order("created_at", { ascending: false });

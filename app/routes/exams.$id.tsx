@@ -326,11 +326,22 @@ const translateStatus = (status: string): string => {
   return translations[status] || status;
 };
 
+import { useState } from "react";
+import QRModal from "~/components/QRModal";
+
 export default function ExamDetails() {
   const { exam, statusHistory, userCanEdit } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isModal = searchParams.get("modal") === "true";
+  const [showQRModal, setShowQRModal] = useState(false);
+
+  const qrData = {
+    id: exam.id,
+    type: exam.exam_type,
+    patient: exam.patient?.full_name || exam.patient_name,
+    priority: exam.priority
+  };
 
   const handleClose = () => {
     if (isModal) {
@@ -347,20 +358,18 @@ export default function ExamDetails() {
         <div className="flex justify-between items-center bg-gray-800/40 p-4 rounded-lg mb-6">
           <div className="flex items-center gap-6">
             {/* QR Code */}
-            <div className="bg-white p-2 rounded-lg">
+            <button 
+              onClick={() => setShowQRModal(true)}
+              className="bg-white p-2 rounded-lg hover:ring-2 hover:ring-blue-500 transition-all cursor-pointer"
+              title="Click para ampliar"
+            >
               <QRCodeSVG
-                value={JSON.stringify({
-                  id: exam.id,
-                  type: exam.exam_type,
-                  patient: exam.patient?.full_name || exam.patient_name,
-                  status: exam.status,
-                  priority: exam.priority
-                })}
+                value={JSON.stringify(qrData)}
                 size={80}
                 level="H"
                 includeMargin={false}
               />
-            </div>
+            </button>
             <div className="flex flex-col gap-2">
               <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                 Examen #{exam.id}
@@ -514,6 +523,12 @@ export default function ExamDetails() {
           </div>
         </div>
       </div>
+      <QRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        qrData={qrData}
+        title={`Código QR - Examen #${exam.id}`}
+      />
     </div>
   );
 

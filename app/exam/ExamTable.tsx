@@ -53,7 +53,8 @@ export default function ExamTable({
         search === "" ||
         exam.patient_name?.toLowerCase().includes(searchLower) ||
         exam.exam_type?.toLowerCase().includes(searchLower) ||
-        exam.id.toLowerCase().includes(searchLower);
+        exam.id.toLowerCase().includes(searchLower) ||
+        exam.patient_document_number?.toLowerCase().includes(searchLower);
       const matchesStatus =
         statusFilter === "all" || exam.status === statusFilter;
       const matchesPriority =
@@ -79,7 +80,7 @@ export default function ExamTable({
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <input
                   type="text"
-                  placeholder="Buscar por paciente, tipo o ID..."
+                  placeholder="Buscar por paciente, RUN, tipo o ID..."
                   value={search}
                   onChange={handleSearchChange}
                   className="w-full pl-9 pr-3 py-2 bg-gray-800 border border-gray-600 rounded-md 
@@ -158,7 +159,10 @@ export default function ExamTable({
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Paciente
                 </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  RUN
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Tipo
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -192,6 +196,12 @@ export default function ExamTable({
                     onClick={() => onExamClick(exam.id)}
                   >
                     {exam.patient_name || "N/A"}
+                  </td>
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 cursor-pointer"
+                    onClick={() => onExamClick(exam.id)}
+                  >
+                    {exam.patient_document_number || "N/A"}
                   </td>
                   <td 
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 cursor-pointer"
