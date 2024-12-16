@@ -1,7 +1,8 @@
 import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { remixPWA } from '@remix-pwa/dev'
+import { remixPWA } from '@remix-pwa/dev';
+import path from 'path';
 
 declare module "@remix-run/node" {
   interface Future {
@@ -19,8 +20,23 @@ export default defineConfig({
         v3_singleFetch: true,
         v3_lazyRouteDiscovery: true,
       },
-        }),
+    }),
     remixPWA(),
     tsconfigPaths(),
   ],
+  resolve: {
+    alias: {
+      '~': path.resolve(__dirname, './app')
+    }
+  },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+          return;
+        }
+        warn(warning);
+      }
+    }
+  }
 });

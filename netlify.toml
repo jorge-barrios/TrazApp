@@ -1,11 +1,16 @@
 [build]
   command = "npm run build"
-  publish = "public"
+  publish = "build/client"
   functions = "netlify/functions"
 
 [dev]
   command = "npm run dev"
   port = 3000
+
+[[redirects]]
+  from = "/build/*"
+  to = "/build/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"
@@ -14,3 +19,8 @@
 
 [functions]
   node_bundler = "esbuild"
+
+[[headers]]
+  for = "/build/*"
+  [headers.values]
+    "Cache-Control" = "public, max-age=31536000, s-maxage=31536000"
