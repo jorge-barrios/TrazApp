@@ -4,10 +4,10 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "build": "remix vite:build && cp -r public/* build/client/",
-    "dev": "remix vite:dev",
+    "build": "remix build && cp -r public/* build/client/",
+    "dev": "remix dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "start": "remix-serve ./build/server/index.js",
+    "start": "remix-serve ./build/index.js",
     "typecheck": "tsc",
     "generate-icons": "node scripts/generate-icons.js"
   },
