@@ -1,6 +1,7 @@
 // @ts-ignore
 export const config = {
-  runtime: 'nodejs18.x'
+  runtime: 'nodejs',
+  regions: ['iad1']
 };
 
 import { createServerClient } from '@supabase/auth-helpers-remix';
