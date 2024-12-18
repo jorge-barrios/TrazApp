@@ -1,7 +1,6 @@
 /** @type {import('@remix-run/dev').AppConfig} */
 export default {
   ignoredRouteFiles: ["**/.*"],
-  serverModuleFormat: "cjs",
   serverBuildTarget: "vercel",
   server: process.env.NODE_ENV === "development" ? undefined : "./server.js",
   future: {
@@ -11,5 +10,6 @@ export default {
     v2_meta: true,
     v2_normalizeFormMethod: true,
     v2_routeConvention: true,
-  }
+  },
+  serverModuleFormat: "cjs"
 };

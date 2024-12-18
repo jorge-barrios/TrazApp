@@ -1,15 +1,20 @@
 {
   "version": 2,
   "framework": "remix",
-  "buildCommand": "remix build",
+  "buildCommand": "npx remix build",
   "devCommand": "remix dev",
   "installCommand": "npm install",
   "regions": ["iad1"],
   "outputDirectory": "public",
   "build": {
     "env": {
-      "ENABLE_VC_BUILD": "1"
+      "ENABLE_VC_BUILD": "1",
+      "REMIX_REGISTRY_TOKEN": "@remix-registry-token"
     }
+  },
+  "env": {
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_ANON_KEY": "@supabase_anon_key"
   },
   "headers": [
     {
