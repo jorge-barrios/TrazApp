@@ -1,0 +1,6 @@
+{
+  "buildCommand": "remix vite:build",
+  "devCommand": "remix vite:dev",
+  "framework": "remix",
+  "installCommand": "npm install"
+}
