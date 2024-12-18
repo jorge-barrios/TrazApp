@@ -6,11 +6,6 @@
   "installCommand": "npm install",
   "outputDirectory": "build",
   "regions": ["iad1"],
-  "functions": {
-    "api/*": {
-      "runtime": "@vercel/node@3.0.0"
-    }
-  },
   "headers": [
     {
       "source": "/build/(.*)",
@@ -29,7 +24,7 @@
     },
     {
       "source": "/:path*",
-      "destination": "/api/index.js"
+      "destination": "/:path*"
     }
   ]
 }
