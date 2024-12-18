@@ -23,6 +23,7 @@ const LoginForm: FC<LoginFormProps> = ({ isDarkMode }) => {
   const isSubmitting = navigation.state === "submitting";
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -75,25 +76,24 @@ const LoginForm: FC<LoginFormProps> = ({ isDarkMode }) => {
     }
 
     setErrors({});
-    const formData = new FormData(e.currentTarget);
-    try {
-      const response = await fetch('/login', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (response.ok) {
-        setShowSuccess(true);
-      } else {
-        const data = await response.json();
-        if (data.error) {
-          setErrors({ email: data.error });
-        }
-      }
-    } catch (error) {
-      setErrors({ email: 'Error al intentar iniciar sesión' });
-    }
+    setIsLoading(true);
+    
+    // Usar el sistema de acciones de Remix en lugar de fetch directo
+    (e.target as HTMLFormElement).submit();
   };
+
+  // Manejar la respuesta de la acción
+  useEffect(() => {
+    if (actionData?.error) {
+      setErrors({ email: actionData.error });
+      setIsLoading(false);
+    } else if (navigation.state === "idle" && navigation.formData) {
+      setShowSuccess(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 500);
+    }
+  }, [actionData, navigation.state, navigation.formData]);
 
   const getEmailValidationState = () => {
     if (!formState.email) return 'empty';
@@ -311,18 +311,18 @@ const LoginForm: FC<LoginFormProps> = ({ isDarkMode }) => {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isSubmitting || !nodeId || !formState.email || !formState.password}
+          disabled={isLoading || !nodeId || !formState.email || !formState.password}
           className={`w-full relative py-2 px-4 border border-transparent rounded-lg 
             text-sm font-medium text-white 
-            ${isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}
+            ${isLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}
             transition-all duration-200 
             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
             disabled:opacity-70 disabled:cursor-not-allowed`}
-          aria-label={isSubmitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
-          aria-busy={isSubmitting}
-          aria-disabled={isSubmitting || !nodeId || !formState.email || !formState.password}
+          aria-label={isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+          aria-busy={isLoading}
+          aria-disabled={isLoading || !nodeId || !formState.email || !formState.password}
         >
-          {isSubmitting ? (
+          {isLoading ? (
             <>
               <LoadingSpinner />
               <span className="sr-only">Procesando inicio de sesión</span>
