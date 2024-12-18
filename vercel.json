@@ -7,9 +7,6 @@
   "outputDirectory": "build",
   "regions": ["iad1"],
   "functions": {
-    "api/*": {
-      "runtime": "@vercel/node@3.0.0"
-    },
     "middleware": {
       "runtime": "@vercel/node@3.0.0"
     }
