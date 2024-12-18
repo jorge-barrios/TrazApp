@@ -1,20 +1,15 @@
 {
   "version": 2,
   "framework": "remix",
-  "buildCommand": "npx remix build",
+  "buildCommand": "remix vite:build",
   "devCommand": "remix dev",
   "installCommand": "npm install",
+  "outputDirectory": "build",
   "regions": ["iad1"],
-  "outputDirectory": "public",
-  "build": {
-    "env": {
-      "ENABLE_VC_BUILD": "1",
-      "REMIX_REGISTRY_TOKEN": "@remix-registry-token"
+  "functions": {
+    "api/*": {
+      "runtime": "@vercel/node@3.0.0"
     }
-  },
-  "env": {
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_ANON_KEY": "@supabase_anon_key"
   },
   "headers": [
     {
@@ -27,10 +22,17 @@
       ]
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/api/index.js"
+      "src": "/build/(.*)",
+      "dest": "/build/$1",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/"
     }
   ]
 }
