@@ -1,34 +1,32 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/auth-helpers-remix';
+import { redirect } from '@remix-run/node';
+import type { LoaderFunction } from '@remix-run/node';
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+export const adminLoader: LoaderFunction = async ({ request }) => {
+  const response = new Response();
+  const supabase = createServerClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!,
+    { request, response }
+  );
 
   // Verificar autenticación
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Verificar acceso a rutas de admin
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/auth/signin', req.url))
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
-      return NextResponse.redirect(new URL('/', req.url))
-    }
+  if (!user) {
+    return redirect('/login');
   }
 
-  return res
-}
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
 
-export const config = {
-  matcher: ['/admin/:path*']
-}
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
+    return redirect('/');
+  }
+
+  return null;
+};
