@@ -1,45 +1,38 @@
 {
-  "buildCommand": "npx remix vite:build",
-  "outputDirectory": "build",
+  "version": 2,
   "framework": "remix",
-  "regions": ["iad1"],
-  "env": {
-    "NODE_VERSION": "20"
-  },
+  "buildCommand": "remix build",
+  "devCommand": "remix dev",
   "functions": {
-    "api/*": {
-      "memory": 1024,
-      "maxDuration": 10
+    "api/*.js": {
+      "runtime": "@vercel/node@3.0.0"
     }
   },
+  "installCommand": "npm install",
   "routes": [
     {
-      "src": "/build/.*",
+      "src": "/build/(.*)",
       "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
+        "cache-control": "public, max-age=31536000, immutable"
       }
     },
     {
-      "src": "/assets/.*",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
+      "src": "/.*",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-middleware-next",
+          "value": "1"
+        }
+      ],
+      "continue": true
     },
     {
-      "src": "/favicon.ico",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/manifest.json",
-      "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate"
-      }
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/build/server/index.js"
+      "dest": "/"
     }
   ]
 }
