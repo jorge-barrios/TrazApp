@@ -12,29 +12,34 @@ export const loader: LoaderFunction = async ({ request }) => {
   const response = new Response();
   const supabase = createServerSupabase(request, response);
 
-  // Usar getUser() en lugar de getSession()
-  const { data: { user }, error } = await supabase.auth.getUser();
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Error al obtener la sesión:', sessionError);
+      return json(
+        { error: null },
+        { headers: response.headers }
+      );
+    }
 
-  if (error) {
-    console.error('Error al obtener el usuario:', error);
+    if (session) {
+      return redirect("/dashboard", {
+        headers: response.headers
+      });
+    }
+
     return json(
-      { error: 'Error al verificar la autenticación' },
+      { error: null },
+      { headers: response.headers }
+    );
+  } catch (error) {
+    console.error('Error inesperado:', error);
+    return json(
+      { error: null },
       { headers: response.headers }
     );
   }
-
-  if (user) {
-    return redirect("/dashboard", {
-      headers: response.headers
-    });
-  }
-
-  return json(
-    { error: null },
-    {
-      headers: response.headers
-    }
-  );
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -47,19 +52,15 @@ export const action: ActionFunction = async ({ request }) => {
   const nodeId = formData.get("nodeId") as string;
   const rememberMe = formData.get("rememberMe") === "true";
 
-  console.log('Login attempt:', { 
-    email, 
-    nodeId, 
-    rememberMe 
-  });
-
   try {
-    // Verificar que se proporcionó un nodeId
     if (!nodeId) {
-      throw new Error("Debe seleccionar un tipo de centro e ingresar un identificador");
+      return json(
+        { error: "Debe seleccionar un tipo de centro e ingresar un identificador" },
+        { headers: response.headers }
+      );
     }
 
-    // Buscar el nodo por node_id
+    // Buscar el nodo
     const { data: nodeData, error: nodeError } = await supabase
       .from('nodes')
       .select('id')
@@ -67,23 +68,26 @@ export const action: ActionFunction = async ({ request }) => {
       .single();
 
     if (nodeError || !nodeData) {
-      console.error('Node error:', nodeError || 'Node not found');
-      throw new Error("El centro seleccionado no existe");
+      return json(
+        { error: "El centro seleccionado no existe" },
+        { headers: response.headers }
+      );
     }
 
-    console.log('Node found:', nodeData);
-
-    // Intentar login
+    // Login
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (authError) {
-      throw new Error("Las credenciales son incorrectas");
+      return json(
+        { error: "Las credenciales son incorrectas" },
+        { headers: response.headers }
+      );
     }
 
-    // Si el login es exitoso, actualizar el perfil con el nodo
+    // Actualizar perfil
     if (authData.user) {
       const { error: profileError } = await supabase
         .from('profiles')
@@ -95,25 +99,21 @@ export const action: ActionFunction = async ({ request }) => {
         .eq('user_id', authData.user.id);
 
       if (profileError) {
-        throw new Error("Error al actualizar el perfil");
+        return json(
+          { error: "Error al actualizar el perfil" },
+          { headers: response.headers }
+        );
       }
     }
 
     return redirect("/dashboard", {
       headers: response.headers
     });
-
-  } catch (error: any) {
-    console.error('Login error:', error);
+  } catch (error) {
+    console.error('Error en el proceso de login:', error);
     return json(
-      { 
-        error: error.message,
-        fields: { email, nodeId, rememberMe }
-      },
-      { 
-        status: 400,
-        headers: response.headers
-      }
+      { error: "Error inesperado durante el login" },
+      { headers: response.headers }
     );
   }
 };

@@ -60,29 +60,33 @@ const NodeSelector: FC<NodeSelectorProps> = ({
               key={node.id}
               type="button"
               onClick={() => onCategorySelect(node.id)}
-              className={`p-3 rounded-lg border transition-all duration-300
+              className={`p-3 rounded-lg border transition-all duration-300 hover:scale-105 transform
                 ${isSelected
                   ? isDarkMode 
-                    ? 'bg-gray-800 border-blue-500'
-                    : 'bg-blue-50 border-blue-500'
+                    ? 'bg-gray-800 border-blue-500 shadow-lg shadow-blue-500/20'
+                    : 'bg-blue-50 border-blue-500 shadow-lg shadow-blue-500/20'
                   : isDarkMode
-                    ? 'bg-gray-800/50 border-gray-700 hover:border-blue-500'
-                    : 'bg-gray-100 border-gray-200 hover:border-blue-500'
+                    ? 'bg-gray-800/50 border-gray-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10'
+                    : 'bg-gray-100 border-gray-200 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10'
                 }
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                ${isDarkMode ? 'focus:ring-offset-gray-900' : 'focus:ring-offset-white'}
               `}
             >
               <div className="flex flex-col items-center space-y-2">
                 <Icon 
-                  className={`h-6 w-6 ${
+                  className={`h-6 w-6 transition-colors duration-300 ${
                     isSelected
                       ? 'text-blue-500'
-                      : isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                      : isDarkMode 
+                        ? 'text-blue-400 group-hover:text-blue-300' 
+                        : 'text-blue-500 group-hover:text-blue-600'
                   }`}
                 />
-                <span className={`text-sm ${
+                <span className={`text-sm font-medium transition-colors duration-300 ${
                   isSelected
                     ? 'text-blue-500'
-                    : isDarkMode ? 'text-white' : 'text-gray-900'
+                    : isDarkMode ? 'text-gray-100' : 'text-gray-900'
                 }`}>
                   {node.label}
                 </span>
@@ -99,20 +103,17 @@ const NodeSelector: FC<NodeSelectorProps> = ({
           value={centerId}
           onChange={(e) => onCenterIdChange(e.target.value.toLowerCase())}
           placeholder={selectedNode 
-            ? selectedNode.placeholder 
-            : "Seleccione un tipo de centro"}
-          disabled={!selectedCategory}
-          className={`w-full px-4 py-2.5 border rounded-lg
-            transition-all duration-200 text-sm
-            ${isDarkMode
-              ? 'bg-gray-700 text-white border-gray-600 placeholder-gray-400'
-              : 'bg-white text-gray-900 border-gray-300 placeholder-gray-500'
-            }
-            ${selectedCategory 
-              ? 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-              : 'opacity-50 cursor-not-allowed'
-            }
-          `}
+            ? `${selectedNode.prefix}-${selectedNode.placeholder}`
+            : 'Seleccione un tipo de centro'}
+          className={`block w-full pl-3 pr-10 py-2.5 sm:text-sm border rounded-lg transition-all duration-200
+            ${isDarkMode 
+              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}
+            ${selectedNode 
+              ? 'focus:ring-blue-500 focus:border-blue-500' 
+              : 'focus:ring-gray-500 focus:border-gray-500'}
+            appearance-none focus:outline-none focus:ring-2`}
+          disabled={!selectedNode}
         />
       </div>
     </div>

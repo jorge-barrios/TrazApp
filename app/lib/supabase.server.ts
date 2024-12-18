@@ -4,11 +4,23 @@ import { createServerClient } from '@supabase/auth-helpers-remix';
 import type { Database } from '~/types/database';
 
 export const createServerSupabase = (request: Request, response: Response) => {
-  return createServerClient<Database>(
+  const supabase = createServerClient<Database>(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!,
-    { request, response }
+    { 
+      request, 
+      response,
+      options: {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true
+        }
+      }
+    }
   );
+
+  return supabase;
 };
 
 /* 
@@ -18,4 +30,5 @@ export const createServerSupabase = (request: Request, response: Response) => {
 
 // En su lugar, usa:
 // const { data: { user }, error } = await supabase.auth.getUser();
-// ...manejo del error y uso del usuario autenticado...*/
+// ...manejo del error y uso del usuario autenticado...
+*/
