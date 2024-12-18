@@ -1,6 +1,5 @@
 // @ts-ignore
 export const config = {
-  runtime: 'nodejs',
   regions: ['iad1']
 };
 
