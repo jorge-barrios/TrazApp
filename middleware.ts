@@ -1,3 +1,8 @@
+// @ts-ignore
+export const config = {
+  runtime: 'nodejs18.x'
+};
+
 import { createServerClient } from '@supabase/auth-helpers-remix';
 import { redirect } from '@remix-run/node';
 import type { LoaderFunction } from '@remix-run/node';
