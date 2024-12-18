@@ -108,118 +108,123 @@ const LoginForm: FC<LoginFormProps> = ({ isDarkMode }) => {
         onCenterIdChange={setCenterId}
       />
 
-      <div className="space-y-4" role="group" aria-label="Credenciales de acceso">
+      <div className="space-y-2" role="group" aria-label="Credenciales de acceso">
         {/* Email Input Group */}
-        <div className="relative" role="group" aria-labelledby="email-label">
+        <div className="relative min-h-[64px]" role="group" aria-labelledby="email-label">
           <label id="email-label" className="sr-only">
             Correo electrónico
           </label>
           
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <EnvelopeIcon className={`h-5 w-5 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            } ${errors.email ? 'text-red-400' : ''}`} />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <EnvelopeIcon className={`h-5 w-5 transition-colors duration-200 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ${errors.email ? 'text-red-400' : ''}`} />
+            </div>
+            
+            <input
+              type="email"
+              name="email"
+              required
+              autoComplete="email"
+              spellCheck="false"
+              aria-label="Correo electrónico"
+              aria-required="true"
+              aria-invalid={errors.email ? 'true' : 'false'}
+              aria-describedby={`email-error email-requirements`}
+              value={formState.email}
+              placeholder="nombre@institución.cl"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearError('email');
+              }}
+              className={`appearance-none block w-full pl-10 pr-3 py-2.5 sm:text-sm border rounded-lg 
+                ${isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}
+                ${errors.email ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}
+                focus:outline-none focus:ring-2 focus:border-transparent
+                transition-all duration-200`}
+            />
           </div>
           
-          <input
-            type="email"
-            name="email"
-            required
-            autoComplete="email"
-            spellCheck="false"
-            aria-label="Correo electrónico"
-            aria-required="true"
-            aria-invalid={errors.email ? 'true' : 'false'}
-            aria-describedby={`email-error email-requirements`}
-            value={formState.email}
-            placeholder="nombre@institución.cl"
-            onChange={(e) => {
-              setEmail(e.target.value);
-              clearError('email');
-            }}
-            className={`block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-lg 
-              ${isDarkMode 
-                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}
-              ${errors.email ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}
-              focus:outline-none focus:ring-2 focus:border-transparent
-              transition-all duration-200`}
-          />
-          
-          {errors.email && (
-            <p 
-              id="email-error" 
-              className="mt-1 text-sm text-red-500 dark:text-red-400" 
-              role="alert"
-            >
-              {errors.email}
-            </p>
-          )}
-          
-          <div id="email-requirements" className="mt-1 text-xs text-gray-500" aria-live="polite">
-            {formState.email && !validateEmail(formState.email) && 
-              'Ingrese un correo electrónico válido (ejemplo@dominio.com)'}
+          <div className="absolute mt-1 text-sm">
+            {errors.email ? (
+              <p 
+                id="email-error" 
+                className="text-red-500 dark:text-red-400" 
+                role="alert"
+              >
+                {errors.email}
+              </p>
+            ) : formState.email && !validateEmail(formState.email) ? (
+              <p id="email-requirements" className="text-xs text-gray-500" aria-live="polite">
+                Ingrese un correo electrónico válido (ejemplo@dominio.com)
+              </p>
+            ) : null}
           </div>
         </div>
 
         {/* Password Input Group */}
-        <div className="relative" role="group" aria-labelledby="password-label">
+        <div className="relative min-h-[64px]" role="group" aria-labelledby="password-label">
           <label id="password-label" className="sr-only">
             Contraseña
           </label>
           
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <LockClosedIcon className={`h-5 w-5 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            }`} />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <LockClosedIcon className={`h-5 w-5 transition-colors duration-200 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`} />
+            </div>
+            
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              required
+              aria-label="Contraseña"
+              aria-invalid={errors.password ? 'true' : 'false'}
+              aria-describedby={errors.password ? 'password-error' : undefined}
+              value={formState.password}
+              placeholder="••••••••"
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearError('password');
+              }}
+              className={`appearance-none block w-full pl-10 pr-10 py-2.5 sm:text-sm border rounded-lg ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
+            />
+
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center transition-opacity duration-200 hover:opacity-80"
+            >
+              {showPassword ? (
+                <EyeSlashIcon className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              ) : (
+                <EyeIcon className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              )}
+            </button>
           </div>
-          
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            required
-            aria-label="Contraseña"
-            aria-invalid={errors.password ? 'true' : 'false'}
-            aria-describedby={errors.password ? 'password-error' : undefined}
-            value={formState.password}
-            placeholder="••••••••"
-            onChange={(e) => {
-              setPassword(e.target.value);
-              clearError('password');
-            }}
-            className={`block w-full pl-10 pr-10 py-2 sm:text-sm border rounded-lg ${
-              isDarkMode 
-                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
-          />
 
-          {/* Toggle Password Visibility Button */}
-          <button
-            type="button"
-            onClick={togglePasswordVisibility}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
-          >
-            {showPassword ? (
-              <EyeSlashIcon className={`h-5 w-5 ${
-                isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-600'
-              } transition-colors`} />
-            ) : (
-              <EyeIcon className={`h-5 w-5 ${
-                isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-600'
-              } transition-colors`} />
-            )}
-          </button>
-
-          {errors.password && (
-            <p id="password-error" className="mt-1 text-sm text-red-500 dark:text-red-400" role="alert">
-              {errors.password}
-            </p>
-          )}
-          
-          <div id="password-requirements" className="mt-1 text-xs text-gray-500" aria-live="polite">
-            {formState.password && formState.password.length < 6 && 
-              'La contraseña debe tener al menos 6 caracteres'}
+          <div className="absolute mt-1 text-sm">
+            {errors.password ? (
+              <p 
+                id="password-error" 
+                className="text-red-500 dark:text-red-400" 
+                role="alert"
+              >
+                {errors.password}
+              </p>
+            ) : formState.password && formState.password.length < 6 ? (
+              <p id="password-requirements" className="text-xs text-gray-500" aria-live="polite">
+                La contraseña debe tener al menos 6 caracteres
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
