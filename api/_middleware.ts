@@ -1,8 +1,3 @@
-// @ts-ignore
-export const config = {
-  regions: ['iad1']
-};
-
 import { createServerClient } from '@supabase/auth-helpers-remix';
 import { redirect } from '@remix-run/node';
 import type { LoaderFunction } from '@remix-run/node';

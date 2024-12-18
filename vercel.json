@@ -24,7 +24,7 @@
     },
     {
       "source": "/:path*",
-      "destination": "/:path*"
+      "destination": "/api/_middleware"
     }
   ]
 }
