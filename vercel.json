@@ -1,10 +1,13 @@
 {
   "buildCommand": "npx remix vite:build",
-  "devCommand": "npx remix vite:dev",
-  "framework": "remix",
-  "installCommand": "npm install",
   "outputDirectory": "build",
+  "framework": "remix",
   "regions": ["iad1"],
+  "functions": {
+    "api/**/*": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "env": {
     "NODE_VERSION": "20"
   },
