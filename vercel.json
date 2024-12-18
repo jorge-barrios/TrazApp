@@ -3,36 +3,29 @@
   "framework": "remix",
   "buildCommand": "remix build",
   "devCommand": "remix dev",
-  "functions": {
-    "api/*.js": {
-      "runtime": "@vercel/node@3.0.0"
+  "installCommand": "npm install",
+  "regions": ["iad1"],
+  "outputDirectory": "public",
+  "build": {
+    "env": {
+      "ENABLE_VC_BUILD": "1"
     }
   },
-  "installCommand": "npm install",
-  "routes": [
+  "headers": [
     {
-      "src": "/build/(.*)",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/.*",
-      "has": [
+      "source": "/build/(.*)",
+      "headers": [
         {
-          "type": "header",
-          "key": "x-middleware-next",
-          "value": "1"
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
-      ],
-      "continue": true
-    },
+      ]
+    }
+  ],
+  "rewrites": [
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/"
+      "source": "/(.*)",
+      "destination": "/api/index.js"
     }
   ]
 }
