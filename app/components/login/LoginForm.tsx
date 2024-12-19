@@ -20,7 +20,6 @@ const LoginForm: FC<LoginFormProps> = ({ isDarkMode }) => {
   const actionData = useActionData();
   const navigation = useNavigation();
   const navigate = useNavigate();
-  const isSubmitting = navigation.state === "submitting";
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,11 +88,14 @@ const LoginForm: FC<LoginFormProps> = ({ isDarkMode }) => {
       setIsLoading(false);
     } else if (navigation.state === "idle" && navigation.formData) {
       setShowSuccess(true);
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 500);
+      navigate('/dashboard');
     }
   }, [actionData, navigation.state, navigation.formData]);
+
+  // Actualizar estado de carga basado en la navegación
+  useEffect(() => {
+    setIsLoading(navigation.state !== "idle");
+  }, [navigation.state]);
 
   const getEmailValidationState = () => {
     if (!formState.email) return 'empty';
