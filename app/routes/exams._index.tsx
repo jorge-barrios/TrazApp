@@ -298,6 +298,10 @@ export default function ExamsIndex() {
     setPriorityFilter("all");
   };
 
+  const handleExamClick = (examId: string) => {
+    setExamToView(examId);
+  };
+
   return (
     <MainLayout>
       <div className="min-h-screen bg-gray-900">
@@ -328,7 +332,7 @@ export default function ExamsIndex() {
                 exams={exams}
                 onDelete={handleExamDelete}
                 onStatusChange={handleStatusChange}
-                onExamClick={(examId) => setExamToView(examId)}
+                onExamClick={handleExamClick}
                 statusFilter={statusFilter}
                 tableStatusFilter={tableStatusFilter}
                 priorityFilter={priorityFilter}
@@ -413,6 +417,13 @@ export default function ExamsIndex() {
           </div>
         </div>
       </div>
+
+      {examToView && (
+        <ExamDetailsModal
+          examId={examToView}
+          onClose={() => setExamToView(null)}
+        />
+      )}
     </MainLayout>
   );
 }

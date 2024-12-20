@@ -4,7 +4,7 @@ import {
   PencilSquareIcon, 
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { useNavigate } from '@remix-run/react';
+import { useNavigate, Link } from '@remix-run/react';
 import { type Exam, type ExamStatus } from '~/types/exam';
 
 interface ExamActionsProps {
@@ -37,18 +37,14 @@ export default function ExamActions({
   };
 
   return (
-    <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-      {/* View button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/exams/${examId}`);
-        }}
-        className="p-1 text-gray-400 hover:text-white transition-colors"
-        title="Ver detalles"
+    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+      <Link
+        to={`/exams/${exam.id}`}
+        className="text-gray-400 hover:text-white"
+        onClick={(e) => e.stopPropagation()}
       >
         <EyeIcon className="h-5 w-5" />
-      </button>
+      </Link>
 
       {/* Edit button */}
       {canEdit && (
