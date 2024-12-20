@@ -228,6 +228,13 @@ export default function ExamsIndex() {
   const [examToDelete, setExamToDelete] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // Calcular totales importantes
+  const totalEnviados = stats.sentToLab + stats.inAnalysis + stats.resultsAvailable + stats.completed + stats.rejected;
+  const totalResultados = stats.resultsAvailable + stats.completed + stats.rejected;
+  const porcentajeResultados = totalEnviados > 0 
+    ? Math.round((totalResultados / totalEnviados) * 100) 
+    : 0;
+
   const handleExamDelete = (examId: string) => {
     setExamToDelete(examId);
     setShowDeleteModal(true);
@@ -267,102 +274,135 @@ export default function ExamsIndex() {
   return (
     <MainLayout>
       <div className="min-h-screen p-6 bg-gray-900">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Exámenes</h1>
-          <p className="text-gray-400">
-            {profile.node.display_name} - {profile.node.category}
-          </p>
-        </div>
+        <div className="container mx-auto px-4">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold tracking-tight">
+                Gestión de Exámenes
+              </h1>
+              <span className="text-sm text-muted-foreground">
+                {profile.node.display_name} - {profile.node.category}
+              </span>
+            </div>
+          </div>
 
-        {/* Info Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <InfoCard
-            icon={BeakerIcon}
-            title="Total Exámenes"
-            value={stats.total}
-            description="Total de exámenes registrados"
-            colorClass="bg-blue-600"
-          />
-          <InfoCard
-            icon={ClockIcon}
-            title="Registrados"
-            value={stats.registered}
-            description="Exámenes registrados"
-            colorClass="bg-gray-600"
-          />
-          <InfoCard
-            icon={ClipboardDocumentCheckIcon}
-            title="Recolectados"
-            value={stats.collected}
-            description="Exámenes recolectados"
-            colorClass="bg-yellow-500"
-          />
-          <InfoCard
-            icon={ClipboardDocumentCheckIcon}
-            title="Enviados a Lab."
-            value={stats.sentToLab}
-            description="Exámenes enviados al laboratorio"
-            colorClass="bg-blue-500"
-          />
-          <InfoCard
-            icon={ClipboardDocumentCheckIcon}
-            title="En Análisis"
-            value={stats.inAnalysis}
-            description="Exámenes en análisis"
-            colorClass="bg-purple-500"
-          />
-          <InfoCard
-            icon={ClipboardDocumentCheckIcon}
-            title="Resultados Disponibles"
-            value={stats.resultsAvailable}
-            description="Resultados listos"
-            colorClass="bg-green-400"
-          />
-          <InfoCard
-            icon={UserGroupIcon}
-            title="Completados"
-            value={stats.completed}
-            description="Exámenes finalizados"
-            colorClass="bg-green-600"
-          />
-          <InfoCard
-            icon={ClipboardDocumentCheckIcon}
-            title="Rechazados"
-            value={stats.rejected}
-            description="Exámenes rechazados"
-            colorClass="bg-red-500"
-          />
-        </div>
+          <div className="flex gap-6">
+            {/* Main Content - Table */}
+            <div className="flex-1">
+              <ExamTable
+                exams={exams}
+                onDelete={handleExamDelete}
+                onStatusChange={handleStatusChange}
+                onExamClick={(examId) => setExamToView(examId)}
+              />
+            </div>
 
-        {/* Exam Table */}
-        <div>
-          <h2 className="text-xl font-bold text-white mb-4">Listado de Exámenes</h2>
-          <ExamTable
-            exams={exams}
-            onDelete={handleExamDelete}
-            onStatusChange={handleStatusChange}
-            onExamClick={(examId) => setExamToView(examId)}
-          />
-        </div>
+            {/* Right Sidebar - All Stats */}
+            <div className="w-[400px]">
+              <div className="grid grid-cols-2 gap-3">
+                <InfoCard
+                  icon={BeakerIcon}
+                  title="Total Exámenes"
+                  value={stats.total}
+                  description="Total registrados"
+                  colorClass="bg-blue-600"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={ClipboardDocumentCheckIcon}
+                  title="Enviados al Lab"
+                  value={totalEnviados}
+                  description={`${totalEnviados} procesados`}
+                  colorClass="bg-blue-500"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={ClipboardDocumentCheckIcon}
+                  title="Resultados Recibidos"
+                  value={totalResultados}
+                  description={`${porcentajeResultados}% enviados`}
+                  colorClass="bg-green-500"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={UserGroupIcon}
+                  title="Completados"
+                  value={stats.completed}
+                  description="Finalizados"
+                  colorClass="bg-green-600"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={ClockIcon}
+                  title="Creados"
+                  value={stats.registered}
+                  description="Pendientes"
+                  colorClass="bg-gray-600"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={ClipboardDocumentCheckIcon}
+                  title="Recolectados"
+                  value={stats.collected}
+                  description="Por enviar"
+                  colorClass="bg-yellow-500"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={ClipboardDocumentCheckIcon}
+                  title="En Tránsito"
+                  value={stats.sentToLab}
+                  description="Al laboratorio"
+                  colorClass="bg-blue-400"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={ClipboardDocumentCheckIcon}
+                  title="En Análisis"
+                  value={stats.inAnalysis}
+                  description="En proceso"
+                  colorClass="bg-purple-500"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={ClipboardDocumentCheckIcon}
+                  title="Resultados por Registrar"
+                  value={stats.resultsAvailable}
+                  description="Por registrar"
+                  colorClass="bg-green-400"
+                  className="h-24"
+                />
+                <InfoCard
+                  icon={ClipboardDocumentCheckIcon}
+                  title="Rechazados"
+                  value={stats.rejected}
+                  description="No procesables"
+                  colorClass="bg-red-500"
+                  className="h-24"
+                />
+              </div>
+            </div>
+          </div>
 
-        {/* Details Modal */}
-        {examToView && (
-          <ExamDetailsModal
-            examId={examToView}
-            onClose={() => setExamToView(null)}
-          />
-        )}
-        {showDeleteModal && (
-          <ConfirmationModal
-            title="Eliminar Examen"
-            message="¿Estás seguro que deseas eliminar este examen? Esta acción no se puede deshacer."
-            confirmText="Eliminar"
-            cancelText="Cancelar"
-            onConfirm={confirmDelete}
-            onCancel={closeModal}
-          />
-        )}
+          {/* Modals */}
+          {examToView && (
+            <ExamDetailsModal
+              examId={examToView}
+              onClose={() => setExamToView(null)}
+            />
+          )}
+          {showDeleteModal && (
+            <ConfirmationModal
+              title="Eliminar Examen"
+              message="¿Estás seguro que deseas eliminar este examen? Esta acción no se puede deshacer."
+              confirmText="Eliminar"
+              cancelText="Cancelar"
+              onConfirm={confirmDelete}
+              onCancel={closeModal}
+            />
+          )}
+        </div>
       </div>
     </MainLayout>
   );

@@ -1,5 +1,6 @@
 // app/components/exam/ExamPriorityBadge.tsx
 import React, { FC } from 'react';
+import { clsx } from 'clsx';
 
 export type ExamPriority = 'normal' | 'urgente'; // Manteniendo 'urgente' como antes.
 
@@ -10,11 +11,11 @@ interface ExamPriorityBadgeProps {
 const priorityConfig = {
   normal: {
     label: 'Normal',
-    className: 'bg-gray-900 text-gray-200',
+    className: 'bg-gray-500/10 text-gray-300 border-gray-500/20',
   },
   urgente: {
     label: 'Urgente',
-    className: 'bg-red-900 text-red-200',
+    className: 'bg-red-500/10 text-red-400 border-red-500/20',
   },
 } as const;
 
@@ -24,7 +25,13 @@ const ExamPriorityBadge: FC<ExamPriorityBadgeProps> = ({ priority }) => {
   if (!config) {
     console.warn(`Prioridad desconocida: ${priority}`);
     return (
-      <span className="px-2 py-1 inline-flex items-center justify-center rounded-full text-xs font-medium bg-gray-900 text-gray-400">
+      <span
+        className={clsx(
+          'inline-flex items-center px-2.5 py-1 rounded border min-w-[120px] justify-center',
+          'text-xs font-medium leading-tight whitespace-normal text-center min-h-[40px]',
+          'bg-gray-500/10 text-gray-300 border-gray-500/20'
+        )}
+      >
         Desconocida
       </span>
     );
@@ -32,7 +39,11 @@ const ExamPriorityBadge: FC<ExamPriorityBadgeProps> = ({ priority }) => {
 
   return (
     <span
-      className={`px-2 py-1 inline-flex items-center justify-center rounded-full text-xs font-medium ${config.className}`}
+      className={clsx(
+        'inline-flex items-center px-2.5 py-1 rounded border min-w-[120px] justify-center',
+        'text-xs font-medium leading-tight whitespace-normal text-center min-h-[40px]',
+        config.className
+      )}
     >
       {config.label}
     </span>

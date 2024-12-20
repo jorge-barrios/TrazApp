@@ -13,7 +13,9 @@ export default defineConfig({
   plugins: [
     remix({
       future: {
-        v3_fetcherPersist: true,
+        v3_fetcherPersist: true,git add .
+        git commit -m "fix: ajustado espaciado y mensajes de validación en el formulario de login"
+        git push
         v3_relativeSplatPath: true,
         v3_throwAbortReason: true,
         v3_singleFetch: true,

@@ -621,7 +621,7 @@ const routes = {
 };
 const entry = { module: entryWorker };
 /**
- * @remix-run/router v1.20.0
+ * @remix-run/router v1.21.0
  *
  * Copyright (c) Remix Software Inc.
  *
@@ -4761,7 +4761,7 @@ function getAugmentedNamespace(n) {
 }
 var mode$2 = {};
 /**
- * @remix-run/server-runtime v2.13.1
+ * @remix-run/server-runtime v2.15.1
  *
  * Copyright (c) Remix Software Inc.
  *
@@ -4793,7 +4793,7 @@ const require$$0 = /* @__PURE__ */ getAugmentedNamespace(router$2);
 var errors$2 = {};
 const require$$1$1 = /* @__PURE__ */ getAugmentedNamespace(mode$1);
 /**
- * @remix-run/server-runtime v2.13.1
+ * @remix-run/server-runtime v2.15.1
  *
  * Copyright (c) Remix Software Inc.
  *
@@ -4871,7 +4871,7 @@ const errors$1 = /* @__PURE__ */ _mergeNamespaces({
 }, [errors$2]);
 const require$$1 = /* @__PURE__ */ getAugmentedNamespace(errors$1);
 /**
- * @remix-run/server-runtime v2.13.1
+ * @remix-run/server-runtime v2.15.1
  *
  * Copyright (c) Remix Software Inc.
  *
