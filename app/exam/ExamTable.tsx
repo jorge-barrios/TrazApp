@@ -1,5 +1,5 @@
 // app/components/exam/ExamTable.tsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -22,39 +22,91 @@ interface ExamTableProps {
   onDelete?: (id: string) => void;
   onStatusChange?: (id: string, status: Exam["status"]) => void;
   onExamClick?: (id: string) => void;
+  statusFilter: string | null;
+  tableStatusFilter: "all" | Exam["status"];
+  priorityFilter: "all" | Exam["priority"];
+  setTableStatusFilter: (value: "all" | Exam["status"]) => void;
+  setPriorityFilter: (value: "all" | Exam["priority"]) => void;
 }
+
+const EmptyRow = () => (
+  <tr className="h-[61px] bg-gray-800/50">
+    <td colSpan={7} className="px-3 py-3.5" />
+  </tr>
+);
+
+// Definimos los estados que corresponden a cada filtro de card
+const cardFilterStates = {
+  pending: ['registered', 'collected'],
+  process: ['sent_to_lab', 'in_analysis'],
+  completed: ['completed'],
+  rejected: ['rejected']
+} as const;
+
+// Función para normalizar texto (remover tildes y otros caracteres especiales)
+const normalizeText = (text: string) => {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+};
 
 export default function ExamTable({
   exams,
   onDelete,
   onStatusChange,
   onExamClick,
+  statusFilter,
+  tableStatusFilter,
+  priorityFilter,
+  setTableStatusFilter,
+  setPriorityFilter
 }: ExamTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | Exam["status"]>("all");
-  const [priorityFilter, setPriorityFilter] = useState<"all" | Exam["priority"]>("all");
-  const [showFilters, setShowFilters] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
   const filteredExams = useMemo(() => {
     return exams.filter((exam) => {
-      const searchLower = search.toLowerCase();
+      const searchNormalized = normalizeText(search);
       const matchesSearch =
         search === "" ||
-        exam.patient_name?.toLowerCase().includes(searchLower) ||
-        exam.exam_type?.toLowerCase().includes(searchLower) ||
-        exam.id.toLowerCase().includes(searchLower) ||
-        exam.patient_document_number?.toLowerCase().includes(searchLower);
-      const matchesStatus =
-        statusFilter === "all" || exam.status === statusFilter;
+        normalizeText(exam.patient_name || '').includes(searchNormalized) ||
+        normalizeText(exam.exam_type || '').includes(searchNormalized) ||
+        normalizeText(exam.id).includes(searchNormalized) ||
+        normalizeText(exam.patient_document_number || '').includes(searchNormalized);
+
+      // Filtro de estado de la tabla
+      const matchesTableStatus = 
+        tableStatusFilter === "all" || exam.status === tableStatusFilter;
+
+      // Filtro de prioridad
       const matchesPriority =
         priorityFilter === "all" || exam.priority === priorityFilter;
 
-      return matchesSearch && matchesStatus && matchesPriority;
+      // Filtro de las cards
+      let matchesCardFilter = true;
+      if (statusFilter) {
+        switch (statusFilter) {
+          case 'pending':
+            matchesCardFilter = exam.status === 'registered' || exam.status === 'collected';
+            break;
+          case 'process':
+            matchesCardFilter = exam.status === 'sent_to_lab' || exam.status === 'in_analysis';
+            break;
+          case 'completed':
+            matchesCardFilter = exam.status === 'completed';
+            break;
+          case 'rejected':
+            matchesCardFilter = exam.status === 'rejected';
+            break;
+        }
+      }
+
+      return matchesSearch && matchesTableStatus && matchesPriority && matchesCardFilter;
     });
-  }, [exams, search, statusFilter, priorityFilter]);
+  }, [exams, search, tableStatusFilter, priorityFilter, statusFilter]);
 
   const totalPages = Math.ceil(filteredExams.length / ITEMS_PER_PAGE);
   const paginatedExams = filteredExams.slice(
@@ -62,18 +114,44 @@ export default function ExamTable({
     currentPage * ITEMS_PER_PAGE
   );
 
+  // Calcular cuántas filas vacías necesitamos
+  const emptyRows = ITEMS_PER_PAGE - paginatedExams.length;
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
 
+  // Función para obtener las opciones de estado según el filtro de card activo
+  const getStatusOptions = () => {
+    if (!statusFilter) {
+      return Object.entries(statusLabels);
+    }
+
+    const allowedStates = cardFilterStates[statusFilter as keyof typeof cardFilterStates];
+    return Object.entries(statusLabels).filter(([value]) => 
+      allowedStates.includes(value as Exam["status"])
+    );
+  };
+
+  // Sincronizar el filtro de tabla cuando cambia la selección de card
+  useEffect(() => {
+    if (statusFilter) {
+      // Si la card seleccionada no incluye el estado actual, resetear a 'all'
+      const allowedStates = cardFilterStates[statusFilter as keyof typeof cardFilterStates];
+      if (tableStatusFilter !== 'all' && !allowedStates.includes(tableStatusFilter)) {
+        setTableStatusFilter('all');
+      }
+    }
+  }, [statusFilter, tableStatusFilter]);
+
   return (
     <div className="w-full">
-      <div className="bg-gray-800 border border-gray-700 rounded-lg">
-        <div className="p-4">
+      <div className="bg-gray-800/40 border border-gray-700 rounded-lg">
+        <div className="p-3">
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-            {/* Search Bar and Filters */}
-            <div className="w-full sm:flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-3">
+            <div className="w-full flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              {/* Buscador */}
               <div className="relative flex-1">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
                 <input
@@ -86,25 +164,33 @@ export default function ExamTable({
                     focus:border-transparent"
                 />
               </div>
+
+              {/* Filtro de Estado */}
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="w-full sm:w-auto bg-gray-800 border border-gray-600 text-white rounded-md py-2 px-3
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={tableStatusFilter}
+                onChange={(e) => setTableStatusFilter(e.target.value as typeof tableStatusFilter)}
+                className={`
+                  w-full sm:w-auto bg-gray-800 border border-gray-600 text-white rounded-md py-2 px-3
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  ${statusFilter ? 'border-blue-500' : ''}
+                `}
               >
                 <option value="all">Todos los estados</option>
-                {Object.entries(statusLabels).map(([value, label]) => (
+                {getStatusOptions().map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
                 ))}
               </select>
 
+              {/* Filtro de Prioridad */}
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value as typeof priorityFilter)}
                 className="w-full sm:w-auto bg-gray-800 border border-gray-600 text-white rounded-md py-2 px-3
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!!statusFilter} // También podríamos deshabilitar el filtro de prioridad
               >
                 <option value="all">Todas las prioridades</option>
                 {Object.entries(priorityLabels).map(([value, label]) => (
@@ -114,93 +200,82 @@ export default function ExamTable({
                 ))}
               </select>
             </div>
-
-            {/* New Exam Button */}
-            <Link
-              to="/exams/new"
-              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 
-                flex items-center justify-center gap-2 transition-colors"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span>Nuevo Examen</span>
-            </Link>
           </div>
 
           {/* Table View (Desktop) */}
           <div className="hidden lg:block">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-900">
-                  <tr>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-300 border-b border-gray-700">
-                      ID
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-300 border-b border-gray-700">
-                      Paciente
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-300 border-b border-gray-700">
-                      Tipo
-                    </th>
-                    <th scope="col" className="w-36 px-3 py-3.5 text-left text-sm font-semibold text-gray-300 border-b border-gray-700">
-                      Estado
-                    </th>
-                    <th scope="col" className="w-36 px-3 py-3.5 text-left text-sm font-semibold text-gray-300 border-b border-gray-700">
-                      Prioridad
-                    </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-300 border-b border-gray-700">
-                      Fecha
-                    </th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6 border-b border-gray-700">
-                      <span className="sr-only">Acciones</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-gray-800 divide-y divide-gray-700">
-                  {paginatedExams.map((exam, index) => (
-                    <tr
-                      key={exam.id}
-                      className={`hover:bg-gray-700/50 cursor-pointer transition-colors ${
-                        index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-800/50'
-                      }`}
-                      onClick={() => onExamClick?.(exam.id)}
-                    >
-                      <td className="whitespace-nowrap px-3 py-3.5 text-sm text-gray-300">
-                        {exam.id}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-3.5 text-sm text-gray-300">
-                        {exam.patient_name}
-                        <div className="text-gray-500 text-xs">
-                          {exam.patient_document_number}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-3.5 text-sm text-gray-300">
-                        {exam.exam_type}
-                      </td>
-                      <td className="w-36 px-3 py-4 text-sm align-middle">
-                        <ExamStatusBadge status={exam.status} />
-                      </td>
-                      <td className="w-36 px-3 py-4 text-sm align-middle">
-                        <ExamPriorityBadge priority={exam.priority || "normal"} />
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-3.5 text-sm text-gray-300">
-                        {formatDate(exam.created_at)}
-                      </td>
-                      <td className="relative whitespace-nowrap py-3.5 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <ExamActions
-                          exam={exam}
-                          onDelete={() => onDelete?.(exam.id)}
-                          onStatusChange={(status) => onStatusChange?.(exam.id, status)}
-                        />
-                      </td>
+              <div className="rounded-md border border-gray-800">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-900">
+                    <tr>
+                      <th className="whitespace-nowrap px-3 py-3 text-left w-[200px] text-gray-300 font-semibold">ID</th>
+                      <th className="whitespace-nowrap px-3 py-3 text-left text-gray-300 font-semibold">Paciente</th>
+                      <th className="whitespace-nowrap px-3 py-3 text-left w-[100px] text-gray-300 font-semibold">Tipo</th>
+                      <th className="whitespace-nowrap px-3 py-3 text-left w-[120px] text-gray-300 font-semibold">Estado</th>
+                      <th className="whitespace-nowrap px-3 py-3 text-left w-[100px] text-gray-300 font-semibold">Prioridad</th>
+                      <th className="whitespace-nowrap px-3 py-3 text-left w-[150px] text-gray-300 font-semibold">Fecha</th>
+                      <th className="whitespace-nowrap px-3 py-3 text-right w-[100px] text-gray-300 font-semibold">Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {paginatedExams.map((exam, index) => (
+                      <tr
+                        key={exam.id}
+                        className={`hover:bg-gray-700/50 cursor-pointer transition-colors ${
+                          index % 2 === 0 ? 'bg-gray-800/40' : 'bg-gray-800/80'
+                        }`}
+                        onClick={() => onExamClick?.(exam.id)}
+                      >
+                        <td className="whitespace-nowrap px-3 py-3.5 text-sm text-gray-300">
+                          {exam.id}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3.5 text-sm text-gray-300">
+                          {exam.patient_name}
+                          <div className="text-gray-500 text-xs">
+                            {exam.patient_document_number}
+                          </div>
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3.5 text-sm text-gray-300">
+                          {exam.exam_type}
+                        </td>
+                        <td className="w-36 px-3 py-4 text-sm align-middle">
+                          <ExamStatusBadge status={exam.status} />
+                        </td>
+                        <td className="w-36 px-3 py-4 text-sm align-middle">
+                          <ExamPriorityBadge priority={exam.priority || "normal"} />
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3.5 text-sm text-gray-300">
+                          {formatDate(exam.created_at)}
+                        </td>
+                        <td className="relative whitespace-nowrap py-3.5 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                          <ExamActions
+                            exam={exam}
+                            onDelete={() => onDelete?.(exam.id)}
+                            onStatusChange={(status) => onStatusChange?.(exam.id, status)}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                    {/* Filas vacías con el mismo patrón de alternancia */}
+                    {emptyRows > 0 && Array.from({ length: emptyRows }).map((_, index) => (
+                      <tr 
+                        key={`empty-${index}`} 
+                        className={`h-[61px] ${
+                          (paginatedExams.length + index) % 2 === 0 ? 'bg-gray-800/40' : 'bg-gray-800/80'
+                        }`}
+                      >
+                        <td colSpan={7} className="px-3 py-3.5" />
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
           {/* Cards View (Mobile/Tablet) */}
-          <div className="lg:hidden space-y-4">
+          <div className="lg:hidden space-y-4 min-h-[600px]">
             {paginatedExams.map((exam) => (
               <ExamCard
                 key={exam.id}

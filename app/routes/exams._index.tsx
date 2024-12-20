@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { json, redirect } from "@remix-run/node";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
-import { useLoaderData, useNavigate, useRevalidator, Form, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigate, useRevalidator, Form, useSubmit, Link } from "@remix-run/react";
 import { requireAuth } from "~/utils/auth.server";
 import MainLayout from "~/components/layouts/MainLayout";
 import ExamTable from "~/exam/ExamTable";
@@ -16,6 +16,15 @@ import {
   ClipboardDocumentCheckIcon,
   ClockIcon,
   UserGroupIcon,
+  ArrowPathIcon,
+  DocumentCheckIcon,
+  TruckIcon,
+  XCircleIcon,
+  DocumentMagnifyingGlassIcon,
+  DocumentDuplicateIcon,
+  ArchiveBoxIcon,
+  ChartBarIcon,
+  PlusIcon,
 } from "@heroicons/react/24/outline";
 import ConfirmationModal from "~/components/ConfirmationModal";
 
@@ -227,12 +236,22 @@ export default function ExamsIndex() {
   const [examToView, setExamToView] = useState<string | null>(null);
   const [examToDelete, setExamToDelete] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [tableStatusFilter, setTableStatusFilter] = useState<"all" | Exam["status"]>("all");
+  const [priorityFilter, setPriorityFilter] = useState<"all" | Exam["priority"]>("all");
 
   // Calcular totales importantes
   const totalEnviados = stats.sentToLab + stats.inAnalysis + stats.resultsAvailable + stats.completed + stats.rejected;
   const totalResultados = stats.resultsAvailable + stats.completed + stats.rejected;
   const porcentajeResultados = totalEnviados > 0 
     ? Math.round((totalResultados / totalEnviados) * 100) 
+    : 0;
+
+  // Cálculos de métricas principales
+  const pendientesAccion = stats.registered + stats.collected;
+  const enProceso = stats.sentToLab + stats.inAnalysis;
+  const porcentajeCompletados = stats.total > 0 
+    ? Math.round((stats.completed / stats.total) * 100) 
     : 0;
 
   const handleExamDelete = (examId: string) => {
@@ -271,11 +290,19 @@ export default function ExamsIndex() {
     }
   };
 
+  // Función para manejar el filtrado por card
+  const handleCardFilter = (filter: string | null) => {
+    setStatusFilter(filter);
+    // Resetear los filtros de la tabla
+    setTableStatusFilter("all");
+    setPriorityFilter("all");
+  };
+
   return (
     <MainLayout>
-      <div className="min-h-screen p-6 bg-gray-900">
-        <div className="container mx-auto px-4">
-          {/* Header */}
+      <div className="min-h-screen bg-gray-900">
+        <div className="px-4 py-4">
+          {/* Header con nuevo botón de vista detallada */}
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold tracking-tight">
@@ -285,123 +312,105 @@ export default function ExamsIndex() {
                 {profile.node.display_name} - {profile.node.category}
               </span>
             </div>
+            <Link
+              to="/exams/stats"
+              className="text-sm text-gray-400 hover:text-white flex items-center gap-2"
+            >
+              <ChartBarIcon className="h-5 w-5" />
+              Vista Detallada
+            </Link>
           </div>
 
-          <div className="flex gap-6">
-            {/* Main Content - Table */}
-            <div className="flex-1">
+          <div className="flex flex-col lg:flex-row gap-3">
+            {/* Tabla Principal - Pasamos el filtro */}
+            <div className="flex-1 min-w-0">
               <ExamTable
                 exams={exams}
                 onDelete={handleExamDelete}
                 onStatusChange={handleStatusChange}
                 onExamClick={(examId) => setExamToView(examId)}
+                statusFilter={statusFilter}
+                tableStatusFilter={tableStatusFilter}
+                priorityFilter={priorityFilter}
+                setTableStatusFilter={setTableStatusFilter}
+                setPriorityFilter={setPriorityFilter}
               />
             </div>
 
-            {/* Right Sidebar - All Stats */}
-            <div className="w-[400px]">
-              <div className="grid grid-cols-2 gap-3">
-                <InfoCard
-                  icon={BeakerIcon}
-                  title="Total Exámenes"
-                  value={stats.total}
-                  description="Total registrados"
-                  colorClass="bg-blue-600"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={ClipboardDocumentCheckIcon}
-                  title="Enviados al Lab"
-                  value={totalEnviados}
-                  description={`${totalEnviados} procesados`}
-                  colorClass="bg-blue-500"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={ClipboardDocumentCheckIcon}
-                  title="Resultados Recibidos"
-                  value={totalResultados}
-                  description={`${porcentajeResultados}% enviados`}
-                  colorClass="bg-green-500"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={UserGroupIcon}
-                  title="Completados"
-                  value={stats.completed}
-                  description="Finalizados"
-                  colorClass="bg-green-600"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={ClockIcon}
-                  title="Creados"
-                  value={stats.registered}
-                  description="Pendientes"
-                  colorClass="bg-gray-600"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={ClipboardDocumentCheckIcon}
-                  title="Recolectados"
-                  value={stats.collected}
-                  description="Por enviar"
-                  colorClass="bg-yellow-500"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={ClipboardDocumentCheckIcon}
-                  title="En Tránsito"
-                  value={stats.sentToLab}
-                  description="Al laboratorio"
-                  colorClass="bg-blue-400"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={ClipboardDocumentCheckIcon}
-                  title="En Análisis"
-                  value={stats.inAnalysis}
-                  description="En proceso"
-                  colorClass="bg-purple-500"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={ClipboardDocumentCheckIcon}
-                  title="Resultados por Registrar"
-                  value={stats.resultsAvailable}
-                  description="Por registrar"
-                  colorClass="bg-green-400"
-                  className="h-24"
-                />
-                <InfoCard
-                  icon={ClipboardDocumentCheckIcon}
-                  title="Rechazados"
-                  value={stats.rejected}
-                  description="No procesables"
-                  colorClass="bg-red-500"
-                  className="h-24"
-                />
+            {/* Dashboard Lateral */}
+            <div className="w-full lg:w-[320px] flex-shrink-0">
+              <div className="space-y-3">
+                {/* Métricas Principales */}
+                <div className="space-y-3">
+                  <InfoCard
+                    icon={BeakerIcon}
+                    title="Total Exámenes"
+                    value={stats.total}
+                    description="Registrados en el sistema"
+                    colorClass="border-blue-500"
+                    size="large"
+                    onClick={() => handleCardFilter(null)}
+                    active={statusFilter === null}
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <InfoCard
+                      icon={ClockIcon}
+                      title="Pendientes"
+                      value={pendientesAccion}
+                      description="Requieren acción"
+                      colorClass="border-amber-400"
+                      onClick={() => handleCardFilter('pending')}
+                      active={statusFilter === 'pending'}
+                    />
+                    <InfoCard
+                      icon={ArrowPathIcon}
+                      title="En Proceso"
+                      value={enProceso}
+                      description="En laboratorio"
+                      colorClass="border-blue-400"
+                      onClick={() => handleCardFilter('process')}
+                      active={statusFilter === 'process'}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <InfoCard
+                      icon={ClipboardDocumentCheckIcon}
+                      title="Completados"
+                      value={stats.completed}
+                      description={`${porcentajeCompletados}% del total`}
+                      colorClass="border-green-500"
+                      onClick={() => handleCardFilter('completed')}
+                      active={statusFilter === 'completed'}
+                    />
+                    <InfoCard
+                      icon={XCircleIcon}
+                      title="Rechazados"
+                      value={stats.rejected}
+                      description="No procesables"
+                      colorClass="border-rose-400"
+                      onClick={() => handleCardFilter('rejected')}
+                      active={statusFilter === 'rejected'}
+                    />
+                  </div>
+                </div>
+
+                {/* Acciones Rápidas */}
+                <div className="border-t border-gray-700 pt-3">
+                  <h3 className="text-sm font-medium text-gray-400 mb-3 px-1">Acciones Rápidas</h3>
+                  <Link
+                    to="/exams/new"
+                    className="flex items-center gap-2 p-2 rounded-md bg-blue-600 hover:bg-blue-700 
+                      transition-colors text-white font-medium shadow-lg"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                    <span className="text-sm">Nuevo Examen</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Modals */}
-          {examToView && (
-            <ExamDetailsModal
-              examId={examToView}
-              onClose={() => setExamToView(null)}
-            />
-          )}
-          {showDeleteModal && (
-            <ConfirmationModal
-              title="Eliminar Examen"
-              message="¿Estás seguro que deseas eliminar este examen? Esta acción no se puede deshacer."
-              confirmText="Eliminar"
-              cancelText="Cancelar"
-              onConfirm={confirmDelete}
-              onCancel={closeModal}
-            />
-          )}
         </div>
       </div>
     </MainLayout>
